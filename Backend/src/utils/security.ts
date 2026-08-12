@@ -1,8 +1,9 @@
-import type { UserJWT } from "../types/users";
+import type { LoginCredentials, UserJWT } from "../types/security";
 import jwt from "jsonwebtoken"
 import crypto from "crypto"
+import { compareSync } from "bcrypt"
 import { pool } from "./db";
-import { DatabaseException } from "../types/errors";
+import { ApiException, DatabaseException } from "../types/errors";
 
 const TOKEN_LIFESPAN: string = process.env.JWT_LIFESPAN || "15m"
 
@@ -28,6 +29,35 @@ export async function generateSessionToken(userId: number): Promise<string> {
 
         return sessionId
     } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export async function verifyLoginCredentials(credentials: LoginCredentials) {
+    try {
+        const result = await pool.query(
+            "SELECT id, username, password FROM users WHERE email = $1",
+            [credentials.email]
+        )
+
+        if (!result.rows[0]) {
+            throw new ApiException(401, "INVALID_LOGIN", "Email or password incorrect")
+        }
+
+        if (compareSync(credentials.password, result.rows[0].password)) {
+            return {
+                id: result.rows[0].id,
+                username: result.rows[0].username
+            }
+        } else {
+            throw new ApiException(401, "INVALID_LOGIN", "Email or password incorrect")
+        }
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+        
+        console.error(error)
         throw new DatabaseException(error as Error)
     }
 }

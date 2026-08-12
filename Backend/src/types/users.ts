@@ -4,8 +4,3 @@ export interface UserRegistration {
     password?: string
     discord_id?: string
 }
-
-export interface UserJWT {
-    id: number
-    username: string
-}
