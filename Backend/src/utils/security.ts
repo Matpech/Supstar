@@ -1,9 +1,9 @@
 import type { LoginCredentials, UserJWT } from "../types/security";
 import jwt from "jsonwebtoken"
 import crypto from "crypto"
-import { compareSync } from "bcrypt"
+import { compareSync, hashSync } from "bcrypt"
 import { pool } from "./db";
-import { ApiException, DatabaseException } from "../types/errors";
+import { ApiException, DatabaseException, NotFoundException } from "../types/errors";
 
 const TOKEN_LIFESPAN: string = process.env.JWT_LIFESPAN || "15m"
 
@@ -93,11 +93,47 @@ export async function invalidateSessionId(sessionId: string) {
     }
 }
 
-export async function invalidateAllSessionIds(userId: number) {
+export async function invalidateAllSessionIds(userId: number, except?: string) {
     try {
         await pool.query(
-            "DELETE FROM active_sessions WHERE user_id = $1",
+            "DELETE FROM active_sessions WHERE user_id = $1 AND ($2::varchar IS NULL OR id <> $2::varchar)",
+            [userId, except ?? null]
+        )
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export async function verifyPassword(userId: number, password: string) {
+    try {
+        const result = await pool.query(
+            "SELECT password FROM users WHERE id = $1",
             [userId]
+        )
+
+        if (!result.rows[0]) {
+            throw new NotFoundException("User")
+        }
+
+        if (!compareSync(password, result.rows[0].password)) {
+            throw new ApiException(401, "INCORRECT_PASSWORD", "Password is invalid")
+        }
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export async function updatePassword(userId: number, newPassword: string) {
+    const hashedPassword = hashSync(newPassword, 12)
+
+    try {
+        await pool.query(
+            "UPDATE users SET password = $1 WHERE id = $2",
+            [hashedPassword, userId]
         )
     } catch (error) {
         throw new DatabaseException(error as Error)

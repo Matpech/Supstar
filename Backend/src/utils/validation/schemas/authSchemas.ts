@@ -14,3 +14,9 @@ export const loginSchema = Joi.object({
 export const sessionIdSchema = Joi.object({
     sessionId: Joi.string().length(64).required()
 })
+
+export const passwordUpdateSchema = Joi.object({
+    oldPassword: Joi.string().min(8).max(128).required(),
+    newPassword: Joi.string().min(8).max(128).required(),
+    sessionId: Joi.string().length(64).required()
+})

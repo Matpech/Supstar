@@ -39,3 +39,9 @@ export class InvalidTokenException extends ApiException {
         super(401, "INVALID_TOKEN", "Your token is invalid or has expired")
     }
 }
+
+export class NotFoundException extends ApiException {
+    constructor(resourceName: string) {
+        super(404, "NOT_FOUND", `${resourceName} was not found`)
+    }
+}
