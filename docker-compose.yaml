@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:18.4-alpine3.24
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/postgresql
+      - ./PostgreSQL:/docker-entrypoint-initdb.d
+  api:
+    build: ./Backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 4000:4000
+
+volumes:
+  db_data:
