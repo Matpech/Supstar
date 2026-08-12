@@ -38,3 +38,29 @@ export const createUser = async (user: UserRegistration) => {
         }
     }
 }
+
+export const getOneUserByDiscordId = async (discordId: string) => {
+    try {
+        const result = await pool.query(
+            "SELECT id, username, email, discord_id FROM users WHERE discord_id = $1",
+            [discordId]
+        )
+
+        return result.rows[0] ?? null
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export const getOneUserByUsername = async (username: string) => {
+    try {
+        const result = await pool.query(
+            "SELECT id, username, email, discord_id FROM users WHERE username = $1",
+            [username]
+        )
+
+        return result.rows[0] ?? null
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}

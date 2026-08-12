@@ -8,6 +8,8 @@ import type { LoginCredentials, UserJWT } from "../types/security";
 import { requireLoggedIn, requireLoggedOut } from "../middlewares/authMiddlewares";
 import { ApiException, InvalidTokenException } from "../types/errors";
 
+import discordSSO from "./discordSSO"
+
 const router = Router()
 
 router.post("/register", requireLoggedOut, async (req, res) => {
@@ -80,5 +82,7 @@ router.patch("/update-password", requireLoggedIn, async (req, res) => {
 
     return res.sendStatus(204)
 })
+
+router.use("/discord", discordSSO)
 
 export default router
