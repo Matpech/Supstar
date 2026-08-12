@@ -82,3 +82,24 @@ export async function verifySessionId(sessionId: string) {
     }
 }
 
+export async function invalidateSessionId(sessionId: string) {
+    try {
+        await pool.query(
+            "DELETE FROM active_sessions WHERE id = $1",
+            [sessionId]
+        )
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export async function invalidateAllSessionIds(userId: number) {
+    try {
+        await pool.query(
+            "DELETE FROM active_sessions WHERE user_id = $1",
+            [userId]
+        )
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}

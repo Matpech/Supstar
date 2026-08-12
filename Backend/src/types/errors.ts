@@ -33,3 +33,9 @@ export class ValidationException extends ApiException {
         super(400, "VALIDATION_ERROR", message)
     }
 }
+
+export class InvalidTokenException extends ApiException {
+    constructor() {
+        super(401, "INVALID_TOKEN", "Your token is invalid or has expired")
+    }
+}

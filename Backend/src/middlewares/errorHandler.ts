@@ -1,6 +1,15 @@
 import type { NextFunction, Request, Response } from "express";
 import { ApiException } from "../types/errors";
 
+/**
+ * Error handling middleware
+ * 
+ * If an ApiException has been encountered, return an
+ * error to the user with the proper HTTP response code
+ * and error message.
+ * 
+ * Otherwise, return a 500 error to the client.
+ */
 export const errorHandler = (
     err: unknown,
     _req: Request,

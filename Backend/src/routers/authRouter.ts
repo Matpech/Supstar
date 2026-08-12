@@ -1,14 +1,16 @@
 import { Router } from "express";
 import validate from "../utils/validation/validator";
-import { loginSchema, registrationSchema, tokenRefreshSchema } from "../utils/validation/schemas/authSchemas";
+import { loginSchema, registrationSchema, sessionIdSchema } from "../utils/validation/schemas/authSchemas";
 import type { UserRegistration } from "../types/users";
 import { createUser } from "../repositories/usersRepo";
-import { generateSessionToken, signToken, verifyLoginCredentials, verifySessionId } from "../utils/security";
+import { generateSessionToken, invalidateAllSessionIds, invalidateSessionId, signToken, verifyLoginCredentials, verifySessionId } from "../utils/security";
 import type { LoginCredentials, UserJWT } from "../types/security";
+import { requireLoggedIn, requireLoggedOut } from "../middlewares/authMiddlewares";
+import { ApiException, InvalidTokenException } from "../types/errors";
 
 const router = Router()
 
-router.post("/register", async (req, res) => {
+router.post("/register", requireLoggedOut, async (req, res) => {
     const data: UserRegistration = validate(req, registrationSchema)
 
     const userId: number = await createUser(data)
@@ -21,7 +23,7 @@ router.post("/register", async (req, res) => {
     return res.json({sessionId, token})
 })
 
-router.post("/login", async (req, res) => {
+router.post("/login", requireLoggedOut, async (req, res) => {
     const data: LoginCredentials = validate(req, loginSchema)
     const userData: UserJWT = await verifyLoginCredentials(data)
     const sessionId: string = await generateSessionToken(userData.id)
@@ -31,11 +33,32 @@ router.post("/login", async (req, res) => {
 })
 
 router.post("/refresh", async (req, res) => {
-    const { sessionId } = validate(req, tokenRefreshSchema) as { sessionId: string }
+    const { sessionId } = validate(req, sessionIdSchema) as { sessionId: string }
     const userData: UserJWT = await verifySessionId(sessionId)
     const token: string = signToken(userData)
 
     return res.json({token})
+})
+
+router.post("/logout", requireLoggedIn, async (req, res) => {
+    const { sessionId } = validate(req, sessionIdSchema) as { sessionId: string }
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+    const endAllSessions = req.query.all_sessions !== undefined
+    
+    const userData: UserJWT = await verifySessionId(sessionId)
+    if (req.user.id !== userData.id) {
+        throw new ApiException(403, "SESSION_MISMATCH", "This session does not belong to you")
+    }
+
+    if (endAllSessions) {
+        await invalidateAllSessionIds(userData.id)
+    } else {
+        await invalidateSessionId(sessionId)
+    }
+
+    return res.sendStatus(204)
 })
 
 export default router
