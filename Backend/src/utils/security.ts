@@ -56,8 +56,28 @@ export async function verifyLoginCredentials(credentials: LoginCredentials) {
         if (error instanceof ApiException) {
             throw error
         }
-        
-        console.error(error)
+
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export async function verifySessionId(sessionId: string) {
+    try {
+        const result = await pool.query(
+            "SELECT s.user_id AS id, u.username FROM active_sessions s INNER JOIN users u ON s.user_id = u.id WHERE s.id = $1 AND s.expires_at > NOW()",
+            [sessionId]
+        )
+
+        if (!result.rows[0]) {
+            throw new ApiException(401, "INVALID_SESSION_ID", "Your session ID is invalid or has expired")
+        }
+
+        return result.rows[0]
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
         throw new DatabaseException(error as Error)
     }
 }
