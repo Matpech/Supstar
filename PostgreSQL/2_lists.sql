@@ -1,4 +1,4 @@
-CREATE TYPE list_roles AS ENUM ('reader', 'commenter', 'editor');
+CREATE TYPE list_roles AS ENUM ('reader', 'commenter', 'editor', 'owner');
 
 CREATE TABLE IF NOT EXISTS shared_lists (
     id SERIAL PRIMARY KEY,

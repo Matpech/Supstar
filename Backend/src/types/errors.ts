@@ -41,7 +41,13 @@ export class InvalidTokenException extends ApiException {
 }
 
 export class NotFoundException extends ApiException {
-    constructor(resourceName: string) {
+    constructor(resourceName = "Resource") {
         super(404, "NOT_FOUND", `${resourceName} was not found`)
+    }
+}
+
+export class NotImplementedException extends ApiException {
+    constructor() {
+        super(501, "NOT_IMPLEMENTED", "This feature has not been implemented yet")
     }
 }
