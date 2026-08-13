@@ -1,0 +1,59 @@
+import { Router } from "express";
+import { requireLoggedIn } from "../middlewares/authMiddlewares";
+import { InvalidTokenException, ValidationException } from "../types/errors";
+import { checkSharedListPermissions, createSharedList, deleteSharedList, updateSharedListDetails } from "../repositories/sharedListsRepo";
+import validate from "../utils/validation/validator";
+import { sharedListCreateSchema, sharedListUpdateSchema } from "../utils/validation/schemas/sharedListsSchemas";
+import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
+import { SharedListRoles } from "../types/sharedLists";
+
+const router = Router()
+
+router.post("/", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const data = validate(req, sharedListCreateSchema)
+
+    const list = await createSharedList({
+        name: data.name,
+        description: data.description,
+        owner_id: req.user.id
+    })
+
+    return res.json(list)
+})
+
+router.patch("/:sl_id", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+    if (!sl_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+    const data = validate(req, sharedListUpdateSchema)
+    await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.OWNER)
+
+    const updatedList = await updateSharedListDetails(sl_id.value, data)
+    return res.json(updatedList)
+})
+
+router.delete("/:sl_id", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+    if (!sl_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+    await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.OWNER)
+
+    await deleteSharedList(sl_id.value)
+    return res.sendStatus(204)
+})
+
+export default router

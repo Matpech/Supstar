@@ -8,3 +8,10 @@ export interface SharedListUpdateArgs {
     name?: string
     description?: string
 }
+
+export enum SharedListRoles {
+    OWNER = "owner",
+    EDITOR = "editor",
+    COMMENTER = "commenter",
+    READER = "reader"
+}

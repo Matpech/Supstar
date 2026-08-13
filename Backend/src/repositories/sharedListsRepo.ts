@@ -1,5 +1,5 @@
 import { ApiException, DatabaseException, NotFoundException, NotImplementedException } from "../types/errors";
-import type { SharedListCreateArgs, SharedListUpdateArgs } from "../types/sharedLists";
+import { SharedListRoles, type SharedListCreateArgs, type SharedListUpdateArgs } from "../types/sharedLists";
 import { pool } from "../utils/db";
 
 export const createSharedList = async (details: SharedListCreateArgs) => {
@@ -11,7 +11,7 @@ export const createSharedList = async (details: SharedListCreateArgs) => {
 
         // 2. Create the shared list
         const result = await client.query(
-            "INSERT INTO shared_lists (owner_id, name, description) VALUES ($1, $2, $3) RETURNING id",
+            "INSERT INTO shared_lists (owner_id, name, description) VALUES ($1, $2, $3) RETURNING *",
             [details.owner_id, details.name, details.description]
         )
 
@@ -24,7 +24,7 @@ export const createSharedList = async (details: SharedListCreateArgs) => {
         // 4. Commit and return the new shared list ID to the caller
         await client.query("COMMIT")
 
-        return result.rows[0].id
+        return result.rows[0]
     } catch (error) {
         if (error instanceof Error && "code" in error && "constraint" in error) {
             switch (error.code) {
@@ -139,15 +139,37 @@ export const getAvailableSharedLists = async (userId: number) => {
     throw new NotImplementedException()
 }
 
-export const checkPermissionToAccessSharedList = async (userId: number, listId: number) => {
+export const checkSharedListPermissions = async (userId: number, listId: number, roleRequired: SharedListRoles) => {
     try {
         const result = await pool.query(
             "SELECT * FROM shared_list_members WHERE list_id = $1 AND user_id = $2",
             [listId, userId]
         )
 
+        // If no row is found, user is not a member
         if (!result.rows[0]) {
             throw new ApiException(403, "SL_ACCESS_DENIED", "You do not have access to this shared list")
+        }
+
+        // Verify permissions with the minimum role required
+        switch (result.rows[0].role) {
+            case "editor":
+                if (roleRequired === SharedListRoles.OWNER) {
+                    throw new ApiException(403, "SL_ACCESS_DENIED", "You do not have permission to perform this action")
+                }
+                break;
+            
+            case "commenter":
+                if (roleRequired === SharedListRoles.OWNER || roleRequired === SharedListRoles.EDITOR) {
+                    throw new ApiException(403, "SL_ACCESS_DENIED", "You do not have permission to perform this action")
+                }
+                break;
+
+            case "reader":
+                if (roleRequired !== SharedListRoles.READER) {
+                    throw new ApiException(403, "SL_ACCESS_DENIED", "You do not have permission to perform this action")
+                }
+                break;
         }
     } catch (error) {
         if (error instanceof ApiException) {
