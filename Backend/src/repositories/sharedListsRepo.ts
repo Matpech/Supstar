@@ -179,3 +179,46 @@ export const checkSharedListPermissions = async (userId: number, listId: number,
         throw new DatabaseException(error as Error)
     }
 }
+
+export const addMemberToList = async (userId: number, listId: number, role: SharedListRoles) => {
+    try {
+        await pool.query(
+            "INSERT INTO shared_list_members (user_id, list_id, role) VALUES ($1, $2, $3)",
+            [userId, listId, role]
+        )
+    } catch (error) {
+        if (error instanceof Error && "code" in error && "constraint" in error) {
+            switch (error.code) {
+                case "23503":
+                    // Foreign Key violation (user_id or list_id does not exist)
+                    throw new ApiException(409, "INVALID_ID", "User and/or List ID is invalid")
+            
+                case "23505":
+                    // Duplicate (user_id, list_id) pair found
+                    throw new ApiException(409, "ALREADY_MEMBER", "This user is already a member of the shared list")
+
+                default:
+                    throw new DatabaseException(error)
+            }
+        }
+    }
+}
+
+export const removeMemberFromList = async (userId: number, listId: number) => {
+    try {
+        const result = await pool.query(
+            "DELETE FROM shared_list_members WHERE user_id = $1 AND list_id = $2",
+            [userId, listId]
+        )
+
+        if (result.rowCount === 0) {
+            throw new ApiException(409, "NOT_A_MEMBER", "This user is not a member of the shared list")
+        }
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+        
+        throw new DatabaseException(error as Error)
+    }
+}
