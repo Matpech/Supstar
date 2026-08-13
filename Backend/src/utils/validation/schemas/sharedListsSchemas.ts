@@ -18,3 +18,8 @@ export const sharedListAddMemberSchema = Joi.object({
 export const sharedListRemoveMemberSchema = Joi.object({
     userId: Joi.number().positive().not(0).required()
 })
+
+export const sharedListUpdateMemberRoleSchema = Joi.object({
+    userId: Joi.number().positive().not(0).required(),
+    role: Joi.string().valid('reader', 'commenter', 'editor').required()
+})

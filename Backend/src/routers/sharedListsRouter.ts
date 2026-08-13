@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { requireLoggedIn } from "../middlewares/authMiddlewares";
 import { InvalidTokenException, ValidationException } from "../types/errors";
-import { addMemberToList, checkSharedListPermissions, createSharedList, deleteSharedList, removeMemberFromList, updateSharedListDetails } from "../repositories/sharedListsRepo";
+import { addMemberToList, changeSLMemberRole, checkSharedListPermissions, createSharedList, deleteSharedList, removeMemberFromList, transferSLOwnership, updateSharedListDetails } from "../repositories/sharedListsRepo";
 import validate from "../utils/validation/validator";
-import { sharedListAddMemberSchema, sharedListCreateSchema, sharedListRemoveMemberSchema, sharedListUpdateSchema } from "../utils/validation/schemas/sharedListsSchemas";
+import { sharedListAddMemberSchema, sharedListCreateSchema, sharedListRemoveMemberSchema, sharedListUpdateMemberRoleSchema, sharedListUpdateSchema } from "../utils/validation/schemas/sharedListsSchemas";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { SharedListRoles } from "../types/sharedLists";
 
@@ -85,6 +85,38 @@ router.delete("/:sl_id/member", requireLoggedIn, async (req, res) => {
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.OWNER)
 
     await removeMemberFromList(userId, sl_id.value)
+    return res.sendStatus(204)
+})
+
+router.patch("/:sl_id/member", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const data = validate(req, sharedListUpdateMemberRoleSchema)
+    const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+    if (!sl_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+    await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.OWNER)
+
+    await changeSLMemberRole(data.userId, sl_id.value, data.role)
+    return res.sendStatus(204)
+})
+
+router.post("/:sl_id/transfer-ownership", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const { userId } = validate(req, sharedListRemoveMemberSchema) as { userId: number }
+    const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+    if (!sl_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+    await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.OWNER)
+
+    await transferSLOwnership(req.user.id, userId, sl_id.value)
     return res.sendStatus(204)
 })
 

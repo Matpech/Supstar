@@ -26,6 +26,9 @@ export const createSharedList = async (details: SharedListCreateArgs) => {
 
         return result.rows[0]
     } catch (error) {
+        // Rollback the transaction in case of an error
+        await client.query("ROLLBACK")
+
         if (error instanceof Error && "code" in error && "constraint" in error) {
             switch (error.code) {
                 case "23503":
@@ -218,7 +221,72 @@ export const removeMemberFromList = async (userId: number, listId: number) => {
         if (error instanceof ApiException) {
             throw error
         }
-        
+
         throw new DatabaseException(error as Error)
+    }
+}
+
+export const changeSLMemberRole = async (userId: number, listId: number, newRole: SharedListRoles) => {
+    try {
+        const result = await pool.query(
+            "UPDATE shared_list_members SET role = $1 WHERE user_id = $2 AND list_id = $3 RETURNING *",
+            [newRole, userId, listId]
+        )
+
+        if (result.rowCount === 0) {
+            throw new ApiException(409, "ROLE_UPDATE_FAILED", "Failed to update role. Is the user a member of the list ?")
+        }
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export const transferSLOwnership = async (oldOwner: number, newOwner: number, listId: number) => {
+    const client = await pool.connect()
+    
+    try {
+        // Begin a transaction
+        await client.query("BEGIN")
+
+        // Demote the old owner to the editor role (in the member list)
+        await client.query(
+            "UPDATE shared_list_members SET role = $1 WHERE user_id = $2 AND list_id = $3",
+            [SharedListRoles.EDITOR, oldOwner, listId]
+        )
+
+        // Promote the new owner in the member list
+        const resultPromote = await client.query(
+            "UPDATE shared_list_members SET role = $1 WHERE user_id = $2 AND list_id = $3",
+            [SharedListRoles.OWNER, newOwner, listId]
+        )
+
+        // Safeguard to ensure the new owner is a member
+        if (resultPromote.rowCount === 0) {
+            throw new ApiException(409, "NOT_A_MEMBER", "This user is not a member of the shared list")
+        }
+
+        // Update the owner_id in the shared_lists table
+        await client.query(
+            "UPDATE shared_lists SET owner_id = $1 WHERE id = $2",
+            [newOwner, listId]
+        )
+
+        // Commit the transaction
+        await client.query("COMMIT")
+    } catch (error) {
+        // Rollback the transaction in case of an error
+        await client.query("ROLLBACK")
+        
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    } finally {
+        client.release()
     }
 }
