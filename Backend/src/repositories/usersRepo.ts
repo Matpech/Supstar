@@ -39,6 +39,30 @@ export const createUser = async (user: UserRegistration) => {
     }
 }
 
+export const deleteUser = async (userId: number) => {
+    try {
+        await pool.query(
+            "DELETE FROM users WHERE id = $1",
+            [userId]
+        )
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export const getOneUserById = async (userId: number) => {
+    try {
+        const result = await pool.query(
+            "SELECT id, username, email, discord_id FROM users WHERE id = $1",
+            [userId]
+        )
+
+        return result.rows[0] ?? null
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
 export const getOneUserByDiscordId = async (discordId: string) => {
     try {
         const result = await pool.query(

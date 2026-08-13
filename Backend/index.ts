@@ -5,6 +5,7 @@ import { errorHandler } from "./src/middlewares/errorHandler"
 import { jwtMiddleware } from "./src/middlewares/jwtMiddleware"
 
 import authRouter from "./src/routers/authRouter"
+import selfRouter from "./src/routers/selfRouter"
 
 const PORT = 4000
 const app = Express()
@@ -33,6 +34,7 @@ app.get("/test", async (req, res) => {
 
 // Routers
 app.use("/auth", authRouter)
+app.use("/self", selfRouter)
 
 // Handle errors last
 app.use(errorHandler)

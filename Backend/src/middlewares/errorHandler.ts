@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { ApiException } from "../types/errors";
+import { ApiException, DatabaseException } from "../types/errors";
 
 /**
  * Error handling middleware
@@ -18,6 +18,11 @@ export const errorHandler = (
 ) => {
     // Handle API Exceptions
     if (err instanceof ApiException) {
+        // Log if DatabaseException for debugging purposes
+        if (err instanceof DatabaseException) {
+            console.error(err)
+        }
+
         return res.status(err.statusCode).json({
             error: err.code,
             message: err.message
