@@ -5,9 +5,9 @@ import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { checkSharedListPermissions } from "../repositories/sharedListsRepo";
 import { SharedListRoles } from "../types/sharedLists";
 import validate from "../utils/validation/validator";
-import { locationCreateSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
+import { galleryDeleteSchema, locationCreateSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
 import type { Location, LocationUpdateArgs } from "../types/locations";
-import { createLocation, deleteLocation, updateLocation } from "../repositories/locationsRepo";
+import { createLocation, deleteLocation, deletePhoto, updateLocation } from "../repositories/locationsRepo";
 import { upload, validateImageFile } from "../utils/fileUploads";
 import fs from "fs";
 import { processLocationPhoto } from "../utils/imageProcessing";
@@ -103,7 +103,7 @@ router.post("/:location_id/gallery", requireLoggedIn, upload.array('images'), as
 
         // Process images
         for (const path of paths) {
-            await processLocationPhoto(path, sl_id.value)
+            await processLocationPhoto(path, location_id.value)
         }
 
         return res.sendStatus(201)
@@ -117,6 +117,23 @@ router.post("/:location_id/gallery", requireLoggedIn, upload.array('images'), as
             fs.unlinkSync(path)
         }
     }
+})
+
+router.delete("/:location_id/gallery", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const { imageId } = validate(req, galleryDeleteSchema) as { imageId: string }
+    const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+    const location_id = numericIdSchema.validate(parseInt(req.params.location_id as string))
+    if (!sl_id.value || !location_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+    await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.EDITOR)
+
+    await deletePhoto(imageId)
+    return res.sendStatus(204)
 })
 
 export default router

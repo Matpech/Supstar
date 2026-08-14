@@ -1,6 +1,7 @@
 import { ApiException, DatabaseException, NotFoundException } from "../types/errors";
 import type { Location, LocationUpdateArgs } from "../types/locations";
 import { pool } from "../utils/db";
+import fs from "fs"
 
 export const createLocation = async (data: Location) => {
     try {
@@ -164,6 +165,29 @@ export const addPhotoToIndex = async (locationId: number, photoId: string) => {
             [photoId, locationId]
         )
     } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export const deletePhoto = async (imageId: string) => {
+    try {
+        // Remove from the index
+        const result = await pool.query(
+            "DELETE FROM gallery WHERE id = $1",
+            [imageId]
+        )
+
+        if (result.rowCount === 0) {
+            throw new NotFoundException("Photo")
+        }
+
+        // Delete the file
+        fs.unlinkSync(`/data/photos/${imageId}.webp`)
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
         throw new DatabaseException(error as Error)
     }
 }
