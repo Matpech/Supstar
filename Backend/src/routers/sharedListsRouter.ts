@@ -1,13 +1,40 @@
 import { Router } from "express";
 import { requireLoggedIn } from "../middlewares/authMiddlewares";
 import { InvalidTokenException, ValidationException } from "../types/errors";
-import { addMemberToList, changeSLMemberRole, checkSharedListPermissions, createSharedList, deleteSharedList, removeMemberFromList, transferSLOwnership, updateSharedListDetails } from "../repositories/sharedListsRepo";
+import { addMemberToList, changeSLMemberRole, checkSharedListPermissions, createSharedList, deleteSharedList, getAvailableSharedLists, getOneSharedList, removeMemberFromList, transferSLOwnership, updateSharedListDetails } from "../repositories/sharedListsRepo";
 import validate from "../utils/validation/validator";
 import { sharedListAddMemberSchema, sharedListCreateSchema, sharedListRemoveMemberSchema, sharedListUpdateMemberRoleSchema, sharedListUpdateSchema } from "../utils/validation/schemas/sharedListsSchemas";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { SharedListRoles } from "../types/sharedLists";
 
 const router = Router()
+
+router.get("/", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const availableLists = await getAvailableSharedLists(req.user.id)
+    return res.json({
+        total: availableLists.length,
+        lists: availableLists
+    })
+})
+
+router.get("/:sl_id", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+    if (!sl_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+    await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.READER)
+
+    const listDetails = await getOneSharedList(sl_id.value)
+    return res.json(listDetails)
+})
 
 router.post("/", requireLoggedIn, async (req, res) => {
     if (!req.user) {

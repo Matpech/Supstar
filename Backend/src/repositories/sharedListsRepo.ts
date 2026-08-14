@@ -137,9 +137,29 @@ export const getOneSharedList = async (listId: number) => {
     }
 }
 
-// TODO: Implement function to get all lists available for a user
 export const getAvailableSharedLists = async (userId: number) => {
-    throw new NotImplementedException()
+    try {
+        const result = await pool.query(
+            `
+                SELECT m.list_id, sl.name, sl.description
+                FROM shared_list_members m
+                INNER JOIN shared_lists sl ON sl.id = m.list_id
+                WHERE user_id = $1
+            `, [userId]
+        )
+
+        if (result.rowCount === 0) {
+            throw new ApiException(404, "NO_SL_AVAILABLE", "You are not a member of any shared list")
+        }
+
+        return result.rows
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
 }
 
 export const checkSharedListPermissions = async (userId: number, listId: number, roleRequired: SharedListRoles) => {
