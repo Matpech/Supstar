@@ -1,5 +1,5 @@
-import { ApiException, DatabaseException } from "../types/errors";
-import type { Location } from "../types/locations";
+import { ApiException, DatabaseException, NotFoundException } from "../types/errors";
+import type { Location, LocationUpdateArgs } from "../types/locations";
 import { pool } from "../utils/db";
 
 export const createLocation = async (data: Location) => {
@@ -53,5 +53,106 @@ export const createLocation = async (data: Location) => {
                     throw new DatabaseException(error)
             }
         }
+    }
+}
+
+export const updateLocation = async (locationId: number, newDetails: LocationUpdateArgs) => {
+    // Build SQL query dynamically
+    const fields = [];
+    const values = [];
+    let index = 1;
+
+    if (newDetails.name !== undefined) {
+      fields.push(`name = $${index++}`);
+      values.push(newDetails.name);
+    }
+
+    if (newDetails.category !== undefined) {
+      fields.push(`category = $${index++}`);
+      values.push(newDetails.category);
+    }
+
+    if (newDetails.description !== undefined) {
+      fields.push(`description = $${index++}`);
+      values.push(newDetails.description);
+    }
+
+    if (newDetails.opening_times !== undefined) {
+        fields.push(`opening_times = $${index++}`);
+        values.push(JSON.stringify(newDetails.opening_times));
+    }
+
+    if (newDetails.tags !== undefined) {
+        fields.push(`tags = $${index++}`);
+        values.push(JSON.stringify(newDetails.tags));
+    }
+
+    if (newDetails.status !== undefined) {
+      fields.push(`status = $${index++}`);
+      values.push(newDetails.status);
+    }
+
+    if (newDetails.full_address !== undefined) {
+      fields.push(`full_address = $${index++}`);
+      values.push(newDetails.full_address);
+    }
+
+    if (newDetails.city !== undefined) {
+      fields.push(`city = $${index++}`);
+      values.push(newDetails.city);
+    }
+
+    if (newDetails.country_code !== undefined) {
+      fields.push(`country_code = $${index++}`);
+      values.push(newDetails.country_code);
+    }
+
+    if (newDetails.latitude !== undefined) {
+      fields.push(`latitude = $${index++}`);
+      values.push(newDetails.latitude);
+    }
+
+    if (newDetails.longitude !== undefined) {
+      fields.push(`longitude = $${index++}`);
+      values.push(newDetails.longitude);
+    }
+    
+    values.push(locationId)
+    const sqlQuery = `UPDATE locations SET ${fields.join(", ")} WHERE id = $${index} RETURNING *`
+
+    // Execute the query
+    try {
+        const result = await pool.query(sqlQuery, values)
+
+        if (!result.rows[0]) {
+            throw new NotFoundException("Location")
+        }
+
+        return result.rows[0]
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export const deleteLocation = async (locationId: number) => {
+    try {
+        const result = await pool.query(
+            "DELETE FROM locations WHERE id = $1",
+            [locationId]
+        )
+
+        if (result.rowCount === 0) {
+            throw new NotFoundException("Location")
+        }
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
     }
 }

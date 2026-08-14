@@ -45,3 +45,26 @@ export const locationCreateSchema = Joi.object({
     latitude: Joi.number().min(-90).max(90).required(),
     longitude: Joi.number().min(-180).max(180).required()
 })
+
+export const locationUpdateSchema = Joi.object({
+    name: Joi.string().min(3).max(255),
+    category: Joi.string().valid(...VALID_LOCATION_TYPES),
+    description: Joi.string().max(2000),
+    opening_times: Joi.object({
+        monday: openingTimesSingleDaySchema,
+        tuesday: openingTimesSingleDaySchema,
+        wednesday: openingTimesSingleDaySchema,
+        thursday: openingTimesSingleDaySchema,
+        friday: openingTimesSingleDaySchema,
+        saturday: openingTimesSingleDaySchema,
+        sunday: openingTimesSingleDaySchema
+    }),
+    tags: Joi.array().items(Joi.string().min(3).max(32)),
+    status: Joi.string().valid(...VALID_STATUSES),
+
+    full_address: Joi.string().min(3).max(255),
+    city: Joi.string().min(1).max(255),
+    country_code: Joi.string().length(2).valid(...VALID_ISO3166_CODES),
+    latitude: Joi.number().min(-90).max(90),
+    longitude: Joi.number().min(-180).max(180)
+})
