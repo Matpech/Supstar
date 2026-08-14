@@ -57,7 +57,12 @@ export const createLocation = async (data: Location) => {
     }
 }
 
-export const updateLocation = async (locationId: number, newDetails: LocationUpdateArgs) => {
+export const updateLocation = async (newDetails: LocationUpdateArgs, locationId: number, listId?: number, userId?: number) => {
+    // Throw an error if both listId and userId are defined (impossible)
+    if (listId && userId) {
+        throw new Error("Cannot have both listId and userId defined")
+    }
+    
     // Build SQL query dynamically
     const fields = [];
     const values = [];
@@ -118,8 +123,15 @@ export const updateLocation = async (locationId: number, newDetails: LocationUpd
       values.push(newDetails.longitude);
     }
     
-    values.push(locationId)
-    const sqlQuery = `UPDATE locations SET ${fields.join(", ")} WHERE id = $${index} RETURNING *`
+    values.push(locationId, listId || userId)
+    const sqlQuery = `
+        UPDATE locations
+        SET ${fields.join(", ")}
+        WHERE id = $${index}
+        ${listId ? ` AND list_id = $${index + 1}` : ''}
+        ${userId ? ` AND user_id = $${index + 1}` : ' '}
+        RETURNING *
+    `
 
     // Execute the query
     try {
@@ -139,11 +151,20 @@ export const updateLocation = async (locationId: number, newDetails: LocationUpd
     }
 }
 
-export const deleteLocation = async (locationId: number) => {
+export const deleteLocation = async (locationId: number, listId?: number, userId?: number) => {
+    // Throw an error if both listId and userId are defined (impossible)
+    if (listId && userId) {
+        throw new Error("Cannot have both listId and userId defined")
+    }
+    
     try {
         const result = await pool.query(
-            "DELETE FROM locations WHERE id = $1",
-            [locationId]
+            `
+                DELETE FROM locations
+                WHERE id = $1
+                ${listId ? ` AND list_id = $2` : ''}
+                ${userId ? ` AND user_id = $2` : ''}
+            `, [locationId, listId || userId]
         )
 
         if (result.rowCount === 0) {
@@ -169,12 +190,12 @@ export const addPhotoToIndex = async (locationId: number, photoId: string) => {
     }
 }
 
-export const deletePhoto = async (imageId: string) => {
+export const deletePhoto = async (imageId: string, locationId: number) => {
     try {
         // Remove from the index
         const result = await pool.query(
-            "DELETE FROM gallery WHERE id = $1",
-            [imageId]
+            "DELETE FROM gallery WHERE id = $1 AND location_id = $2",
+            [imageId, locationId]
         )
 
         if (result.rowCount === 0) {
@@ -183,6 +204,40 @@ export const deletePhoto = async (imageId: string) => {
 
         // Delete the file
         fs.unlinkSync(`/data/photos/${imageId}.webp`)
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
+}
+
+export const verifyIdMatch = async (locationId: number, listId?: number, userId?: number) => {
+    // Throw an error if both listId and userId are defined (impossible)
+    if (listId && userId) {
+        throw new Error("Cannot have both listId and userId defined")
+    }
+
+    // Throw an error if no secondary ID has been given
+    if (!listId && !userId) {
+        throw new Error("A listId or userId is required for verification")
+    }
+    
+    try {
+        const result = await pool.query(
+            `
+                SELECT id
+                FROM locations
+                WHERE id = $1
+                ${listId ? ` AND list_id = $2` : ''}
+                ${userId ? ` AND user_id = $2` : ''}
+            `, [locationId, listId || userId]
+        )
+
+        if (!result.rows[0]) {
+            throw new NotFoundException("Location")
+        }
     } catch (error) {
         if (error instanceof ApiException) {
             throw error

@@ -7,7 +7,7 @@ import { SharedListRoles } from "../types/sharedLists";
 import validate from "../utils/validation/validator";
 import { galleryDeleteSchema, locationCreateSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
 import type { Location, LocationUpdateArgs } from "../types/locations";
-import { createLocation, deleteLocation, deletePhoto, updateLocation } from "../repositories/locationsRepo";
+import { createLocation, deleteLocation, deletePhoto, updateLocation, verifyIdMatch } from "../repositories/locationsRepo";
 import { upload, validateImageFile } from "../utils/fileUploads";
 import fs from "fs";
 import { processLocationPhoto } from "../utils/imageProcessing";
@@ -56,7 +56,7 @@ router.patch("/:location_id", requireLoggedIn, async (req, res) => {
     }
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.EDITOR)
 
-    const updatedLocation =  await updateLocation(location_id.value, data)
+    const updatedLocation =  await updateLocation(data, location_id.value, sl_id.value)
     return res.json(updatedLocation)
 })
 
@@ -72,7 +72,7 @@ router.delete("/:location_id", requireLoggedIn, async (req, res) => {
     }
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.EDITOR)
 
-    await deleteLocation(location_id.value)
+    await deleteLocation(location_id.value, sl_id.value)
     return res.sendStatus(204)
 })
 
@@ -88,6 +88,7 @@ router.post("/:location_id/gallery", requireLoggedIn, upload.array('images'), as
             throw new ValidationException("Invalid numeric ID")
         }
         await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.EDITOR)
+        await verifyIdMatch(location_id.value, sl_id.value)
     
         // Check if the file array is empty
         if (!req.files || req.files.length === 0) {
@@ -131,8 +132,9 @@ router.delete("/:location_id/gallery", requireLoggedIn, async (req, res) => {
         throw new ValidationException("Invalid numeric ID")
     }
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.EDITOR)
+    await verifyIdMatch(location_id.value, sl_id.value)
 
-    await deletePhoto(imageId)
+    await deletePhoto(imageId, location_id.value)
     return res.sendStatus(204)
 })
 
