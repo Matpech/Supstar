@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { ApiException, DatabaseException } from "../types/errors";
+import { MulterError } from "multer";
 
 /**
  * Error handling middleware
@@ -26,6 +27,14 @@ export const errorHandler = (
         return res.status(err.statusCode).json({
             error: err.code,
             message: err.message
+        })
+    }
+
+    // Handle Multer errors (file upload limit)
+    if (err instanceof MulterError) {
+        return res.status(400).json({
+            error: "FILE_UPLOAD_ERROR",
+            message: "An error occured while uploading files to the server"
         })
     }
 

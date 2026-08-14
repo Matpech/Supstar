@@ -213,6 +213,23 @@ export const deletePhoto = async (imageId: string, locationId: number) => {
     }
 }
 
+export const countPhotos = async (locationId: number) => {
+    try {
+        const result = await pool.query(
+            "SELECT COUNT(*)::integer FROM gallery WHERE location_id = $1",
+            [locationId]
+        )
+
+        if (!result.rows[0]) {
+            throw new NotFoundException("Location")
+        }
+
+        return result.rows[0].count
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
 export const verifyIdMatch = async (locationId: number, listId?: number, userId?: number) => {
     // Throw an error if both listId and userId are defined (impossible)
     if (listId && userId) {

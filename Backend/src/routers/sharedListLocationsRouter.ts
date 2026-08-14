@@ -1,16 +1,17 @@
 import { Router } from "express";
 import { requireLoggedIn } from "../middlewares/authMiddlewares";
-import { InvalidTokenException, ValidationException } from "../types/errors";
+import { ApiException, InvalidTokenException, ValidationException } from "../types/errors";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { checkSharedListPermissions } from "../repositories/sharedListsRepo";
 import { SharedListRoles } from "../types/sharedLists";
 import validate from "../utils/validation/validator";
 import { galleryDeleteSchema, locationCreateSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
 import type { Location, LocationUpdateArgs } from "../types/locations";
-import { createLocation, deleteLocation, deletePhoto, updateLocation, verifyIdMatch } from "../repositories/locationsRepo";
+import { countPhotos, createLocation, deleteLocation, deletePhoto, updateLocation, verifyIdMatch } from "../repositories/locationsRepo";
 import { upload, validateImageFile } from "../utils/fileUploads";
 import fs from "fs";
 import { processLocationPhoto } from "../utils/imageProcessing";
+import { MulterError } from "multer";
 
 const router = Router({ mergeParams: true })
 
@@ -76,7 +77,7 @@ router.delete("/:location_id", requireLoggedIn, async (req, res) => {
     return res.sendStatus(204)
 })
 
-router.post("/:location_id/gallery", requireLoggedIn, upload.array('images'), async (req, res) => {
+router.post("/:location_id/gallery", requireLoggedIn, upload.array('images', 10), async (req, res) => {
     try {
         if (!req.user) {
             throw new InvalidTokenException()
@@ -94,6 +95,13 @@ router.post("/:location_id/gallery", requireLoggedIn, upload.array('images'), as
         if (!req.files || req.files.length === 0) {
             throw new ValidationException("You must upload at least 1 image file")
         }
+
+        // Only allow 10 images for a location
+        const currentImageCount = await countPhotos(location_id.value)
+        if (currentImageCount + req.files.length > 10) {
+            throw new ApiException(409, "IMAGE_LIMIT_REACHED", "Cannot have more than 10 images on a location")
+        }
+
         const files = req.files as Express.Multer.File[]
         const paths = files.map(f => f.path)
     
