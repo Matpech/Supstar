@@ -156,3 +156,14 @@ export const deleteLocation = async (locationId: number) => {
         throw new DatabaseException(error as Error)
     }
 }
+
+export const addPhotoToIndex = async (locationId: number, photoId: string) => {
+    try {
+        await pool.query(
+            "INSERT INTO gallery (id, location_id) VALUES ($1, $2)",
+            [photoId, locationId]
+        )
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}

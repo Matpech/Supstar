@@ -8,6 +8,9 @@ import validate from "../utils/validation/validator";
 import { locationCreateSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
 import type { Location, LocationUpdateArgs } from "../types/locations";
 import { createLocation, deleteLocation, updateLocation } from "../repositories/locationsRepo";
+import { upload, validateImageFile } from "../utils/fileUploads";
+import fs from "fs";
+import { processLocationPhoto } from "../utils/imageProcessing";
 
 const router = Router({ mergeParams: true })
 
@@ -71,6 +74,49 @@ router.delete("/:location_id", requireLoggedIn, async (req, res) => {
 
     await deleteLocation(location_id.value)
     return res.sendStatus(204)
+})
+
+router.post("/:location_id/gallery", requireLoggedIn, upload.array('images'), async (req, res) => {
+    try {
+        if (!req.user) {
+            throw new InvalidTokenException()
+        }
+    
+        const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+        const location_id = numericIdSchema.validate(parseInt(req.params.location_id as string))
+        if (!sl_id.value || !location_id.value) {
+            throw new ValidationException("Invalid numeric ID")
+        }
+        await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.EDITOR)
+    
+        // Check if the file array is empty
+        if (!req.files || req.files.length === 0) {
+            throw new ValidationException("You must upload at least 1 image file")
+        }
+        const files = req.files as Express.Multer.File[]
+        const paths = files.map(f => f.path)
+    
+        // Validate all images before processing (prevents partial upload, all or nothing)
+        for (const path of paths) {
+            await validateImageFile(path)
+        }
+
+        // Process images
+        for (const path of paths) {
+            await processLocationPhoto(path, sl_id.value)
+        }
+
+        return res.sendStatus(201)
+    } catch (error) {
+        throw error
+    } finally {
+        // Clean up uploads directory once finished
+        const files = req.files as Express.Multer.File[]
+        const paths = files.map(f => f.path)
+        for (const path of paths) {
+            fs.unlinkSync(path)
+        }
+    }
 })
 
 export default router

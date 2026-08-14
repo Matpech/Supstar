@@ -22,3 +22,8 @@ CREATE TABLE IF NOT EXISTS locations (
     latitude NUMERIC NOT NULL,
     longitude NUMERIC NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS gallery (
+    id UUID PRIMARY KEY,
+    location_id INTEGER REFERENCES locations(id) ON DELETE CASCADE
+);
