@@ -6,6 +6,7 @@ import validate from "../utils/validation/validator";
 import { sharedListAddMemberSchema, sharedListCreateSchema, sharedListRemoveMemberSchema, sharedListUpdateMemberRoleSchema, sharedListUpdateSchema } from "../utils/validation/schemas/sharedListsSchemas";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { SharedListRoles } from "../types/sharedLists";
+import SLLocationsRouter from "./sharedListLocationsRouter";
 
 const router = Router()
 
@@ -49,7 +50,7 @@ router.post("/", requireLoggedIn, async (req, res) => {
         owner_id: req.user.id
     })
 
-    return res.json(list)
+    return res.status(201).json(list)
 })
 
 router.patch("/:sl_id", requireLoggedIn, async (req, res) => {
@@ -146,5 +147,7 @@ router.post("/:sl_id/transfer-ownership", requireLoggedIn, async (req, res) => {
     await transferSLOwnership(req.user.id, userId, sl_id.value)
     return res.sendStatus(204)
 })
+
+router.use("/:sl_id/locations", SLLocationsRouter)
 
 export default router
