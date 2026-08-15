@@ -4,6 +4,17 @@ import sharp from "sharp"
 import { ApiException } from "../types/errors"
 import { addPhotoToIndex } from "../repositories/locationsRepo"
 
+/**
+ * Process a single image through the gallery photo pipeline :
+ * - Generates a unique imageId for the image (using a random UUIDv4)
+ * - Ensures the output directory exists
+ * - Converts and saves the image in WebP format
+ * - Adds the image to the index (database)
+ * 
+ * @param filePath The path of the uploaded image
+ * @param locationId The unique ID of the location linked to the image
+ * @throws ApiException (500, IMAGE_PROCESSING_FAILURE)
+ */
 export const processLocationPhoto = async (filePath: string, locationId: number) => {
     const imageId = crypto.randomUUID()
 

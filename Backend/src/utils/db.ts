@@ -1,5 +1,8 @@
 import { Pool } from "pg";
 
+/**
+ * The pg pool used for access to the application's database
+ */
 export const pool = new Pool({
     host: process.env.POSTGRES_HOST,
     port: 5432,

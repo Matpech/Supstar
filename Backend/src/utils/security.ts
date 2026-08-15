@@ -7,6 +7,12 @@ import { ApiException, DatabaseException, NotFoundException } from "../types/err
 
 const TOKEN_LIFESPAN: string = process.env.JWT_LIFESPAN || "15m"
 
+/**
+ * Sign a new JWT access token with the user's public information
+ * 
+ * @param data The data to put in the JWT (id and username)
+ * @returns The generated JWT
+ */
 export function signToken(data: UserJWT) {
     return jwt.sign(
         data,
@@ -18,6 +24,14 @@ export function signToken(data: UserJWT) {
     )
 }
 
+/**
+ * Generate a random 64 character hexadecimal session ID and save it in the
+ * database to be used for API authentication (refreshing the access token)
+ * 
+ * @param userId The unique ID of the user that owns the session
+ * @returns The generated session ID
+ * @throws DatabaseException (500, Internal server error)
+ */
 export async function generateSessionToken(userId: number): Promise<string> {
     const sessionId = crypto.randomBytes(32).toString("hex")
 
@@ -33,6 +47,17 @@ export async function generateSessionToken(userId: number): Promise<string> {
     }
 }
 
+/**
+ * Checks if an email/password combination is valid.
+ * 
+ * The API won't mention which specific value is invalid for security and
+ * privacy reasons (it will return the same error: "Email or password incorrect")
+ * 
+ * @param credentials The email and password to verify
+ * @returns Relevant user information to create a JWT
+ * @throws ApiException (401, INVALID_LOGIN) or DatabaseException (500, Internal
+ * server error)
+ */
 export async function verifyLoginCredentials(credentials: LoginCredentials) {
     try {
         const result = await pool.query(
@@ -61,6 +86,14 @@ export async function verifyLoginCredentials(credentials: LoginCredentials) {
     }
 }
 
+/**
+ * Checks if a valid session ID is valid during an access token refresh procedure.
+ * 
+ * @param sessionId The 64 character session ID to verify
+ * @returns Relevant user information to regenerate a new JWT
+ * @throws ApiException (401, INVALID_SESSION_ID) or DatabaseException (500, Internal
+ * server error)
+ */
 export async function verifySessionId(sessionId: string) {
     try {
         const result = await pool.query(
@@ -82,6 +115,12 @@ export async function verifySessionId(sessionId: string) {
     }
 }
 
+/**
+ * Invalidates a session by deleting the session ID from the database
+ * 
+ * @param sessionId The session ID to delete
+ * @throws DatabaseException (500, Internal server error)
+ */
 export async function invalidateSessionId(sessionId: string) {
     try {
         await pool.query(
@@ -93,6 +132,16 @@ export async function invalidateSessionId(sessionId: string) {
     }
 }
 
+/**
+ * Invalidate every session of a user.
+ * 
+ * An additional parameter can be passed to add an exception (invalidating
+ * every session except the active one)
+ * 
+ * @param userId The ID of the user requesting the mass invalidation
+ * @param except The session ID to keep active (optional)
+ * @throws DatabaseException (500, Internal server error)
+ */
 export async function invalidateAllSessionIds(userId: number, except?: string) {
     try {
         await pool.query(
@@ -104,6 +153,18 @@ export async function invalidateAllSessionIds(userId: number, except?: string) {
     }
 }
 
+/**
+ * Verify if a password matches the password of the specified user's ID in the database
+ * 
+ * Unlike the `verifyLoginCredentials` function, it is not intended to be used in a login
+ * process. This function is intended for password prompts while the user is authenticated
+ * (for example, in a password update form or in a confirmation prompt for a dangerous action)
+ * 
+ * @param userId The unique user ID
+ * @param password The password to verify
+ * @throws NotFoundException, ApiException (401, INCORRECT_PASSWORD) or DatabaseException
+ * (500, Internal server error)
+ */
 export async function verifyPassword(userId: number, password: string) {
     try {
         const result = await pool.query(
@@ -127,6 +188,15 @@ export async function verifyPassword(userId: number, password: string) {
     }
 }
 
+/**
+ * Update the password of a given user.
+ * 
+ * This function performs the hashing operation using bcrypt.
+ * 
+ * @param userId The unique ID of the user that requested the password update
+ * @param newPassword The new password (non hashed)
+ * @throws DatabaseException (500, Internal server error)
+ */
 export async function updatePassword(userId: number, newPassword: string) {
     const hashedPassword = hashSync(newPassword, 12)
 
