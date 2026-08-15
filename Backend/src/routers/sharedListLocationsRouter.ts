@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireLoggedIn } from "../middlewares/authMiddlewares";
-import { ApiException, InvalidTokenException, NotImplementedException, ValidationException } from "../types/errors";
+import { ApiException, InvalidTokenException, ValidationException } from "../types/errors";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { checkSharedListPermissions } from "../repositories/sharedListsRepo";
 import { SharedListRoles } from "../types/sharedLists";
@@ -11,7 +11,7 @@ import { countPhotos, createLocation, deleteLocation, deletePhoto, getLocations,
 import { upload, validateImageFile } from "../utils/fileUploads";
 import fs from "fs";
 import { processLocationPhoto } from "../utils/imageProcessing";
-import { MulterError } from "multer";
+import SLReviewsRouter from "./sharedListReviewsRouter";
 
 const router = Router({ mergeParams: true })
 
@@ -190,5 +190,7 @@ router.get("/:location_id", requireLoggedIn, async (req, res) => {
     const result = await getOneLocation(sl_id.value, location_id.value)
     return res.json(result)
 })
+
+router.use("/:location_id/reviews", SLReviewsRouter)
 
 export default router
