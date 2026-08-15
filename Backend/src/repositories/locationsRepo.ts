@@ -454,11 +454,20 @@ export const getOneLocation = async (listId: number, locationId: number) => {
     try {
         const result = await pool.query(
             `
-                SELECT l.*, ROUND(AVG(r.rating), 2) AS average_score
+                SELECT
+                    l.*,
+                    (
+                        SELECT ROUND(AVG(r.rating), 2)
+                        FROM reviews r
+                        WHERE r.location_id = l.id
+                    ) AS average_score,
+                    (
+                        SELECT ARRAY_AGG(g.id)
+                        FROM gallery g
+                        WHERE g.location_id = l.id
+                    ) AS images
                 FROM locations l
-                LEFT JOIN reviews r ON r.location_id = l.id
                 WHERE l.list_id = $1 AND l.id = $2
-                GROUP BY l.id
             `, [listId, locationId]
         )
 
