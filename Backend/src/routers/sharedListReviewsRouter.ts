@@ -7,7 +7,7 @@ import { reviewCreateSchema, reviewUpdateSchema } from "../utils/validation/sche
 import { checkSharedListPermissions } from "../repositories/sharedListsRepo";
 import { SharedListRoles } from "../types/sharedLists";
 import { verifyIdMatch } from "../repositories/locationsRepo";
-import { deleteReview, publishReview, updateReview } from "../repositories/reviewsRepo";
+import { deleteReview, getReviewsFromLocation, publishReview, updateReview } from "../repositories/reviewsRepo";
 import type { ReviewUpdateParams } from "../types/reviews";
 
 const router = Router({ mergeParams: true })
@@ -61,6 +61,22 @@ router.delete("/:review_id", requireLoggedIn, async (req, res) => {
 
     await deleteReview(review_id.value, req.user.id)
     return res.sendStatus(204)
+})
+
+router.get("/", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+    const location_id = numericIdSchema.validate(parseInt(req.params.location_id as string))
+    if (!sl_id.value || !location_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+    await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.READER)
+
+    const reviews = await getReviewsFromLocation(location_id.value)
+    return res.json(reviews)
 })
 
 export default router

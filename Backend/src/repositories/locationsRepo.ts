@@ -400,7 +400,10 @@ export const getLocations = async (search: LocationSearchParams) => {
         values.push(search.country.toUpperCase())
     }
 
-    // TODO: Add minimum score filter
+    if (search.minimumScore !== undefined) {
+        fields.push(`(SELECT AVG(r.rating) FROM reviews r WHERE r.location_id = l.id) >= $${index++}`)
+        values.push(search.minimumScore)
+    }
 
     if (search.prices !== undefined) {
         fields.push(`l.price BETWEEN $${index++} AND $${index++}`)
@@ -413,13 +416,13 @@ export const getLocations = async (search: LocationSearchParams) => {
     }
 
     const sqlQuery = `
-        SELECT l.*
+        SELECT l.*, ROUND(AVG(r.rating), 2) AS average_score
         FROM locations l
+        LEFT JOIN reviews r ON r.location_id = l.id
         WHERE ${search.listId ? `list_id = $1` : `user_id = $1`}
         ${fields.length > 0 ? ' AND ' : ''}${fields.join(" AND ")}
+        GROUP BY l.id
     `
-
-    console.log(sqlQuery)
 
     // Executing the SQL query
     try {
@@ -451,9 +454,11 @@ export const getOneLocation = async (listId: number, locationId: number) => {
     try {
         const result = await pool.query(
             `
-                SELECT l.*
+                SELECT l.*, ROUND(AVG(r.rating), 2) AS average_score
                 FROM locations l
+                LEFT JOIN reviews r ON r.location_id = l.id
                 WHERE l.list_id = $1 AND l.id = $2
+                GROUP BY l.id
             `, [listId, locationId]
         )
 

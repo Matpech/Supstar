@@ -106,3 +106,40 @@ export const deleteReview = async (reviewId: number, userId: number) => {
         throw new DatabaseException(error as Error)
     }
 }
+
+/**
+ * Fetch all reviews published for a given location
+ * 
+ * @param locationId The unique ID of the location
+ * @returns An array of reviews
+ * @throws ApiException (404 NO_REVIEWS) or DatabaseException (500, Internal
+ * server error)
+ */
+export const getReviewsFromLocation = async (locationId: number) => {
+    try {
+        const result = await pool.query(
+            `
+                SELECT
+                    r.id,
+                    json_build_object('id', u.id, 'username', u.username) AS reviewer,
+                    r.rating,
+                    r.comment
+                FROM reviews r
+                INNER JOIN users u ON u.id = r.reviewer_id
+                WHERE r.location_id = $1
+            `, [locationId]
+        )
+
+        if (result.rowCount === 0) {
+            throw new ApiException(404, "NO_REVIEWS", "There are no reviews for this location")
+        }
+
+        return result.rows
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
+}
