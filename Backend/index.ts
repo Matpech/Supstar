@@ -7,6 +7,7 @@ import { jwtMiddleware } from "./src/middlewares/jwtMiddleware"
 import authRouter from "./src/routers/authRouter"
 import selfRouter from "./src/routers/selfRouter"
 import sharedListsRouter from "./src/routers/sharedListsRouter"
+import usersRouter from "./src/routers/usersRouter"
 
 const PORT = 4000
 const app = Express()
@@ -37,6 +38,7 @@ app.get("/test", async (req, res) => {
 app.use("/auth", authRouter)
 app.use("/self", selfRouter)
 app.use("/lists", sharedListsRouter)
+app.use("/users", usersRouter)
 
 // Handle errors last
 app.use(errorHandler)
