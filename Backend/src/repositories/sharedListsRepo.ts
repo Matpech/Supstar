@@ -2,6 +2,18 @@ import { ApiException, DatabaseException, NotFoundException, NotImplementedExcep
 import { SharedListRoles, type SharedListCreateArgs, type SharedListUpdateArgs } from "../types/sharedLists";
 import { pool } from "../utils/db";
 
+/**
+ * Creates a new Shared List in the database and register its owner.
+ * 
+ * Uses a SQL transaction to ensure integrity during the two step creation
+ * process (creating the list and registering the list member)
+ * 
+ * @param details Information required to create the list (owner_id, name
+ * and description)
+ * @returns The inserted Shared List in the database
+ * @throws ApiException (409, invalid ID) or DatabaseException (500, Internal
+ * server error)
+ */
 export const createSharedList = async (details: SharedListCreateArgs) => {
     const client = await pool.connect()
     
@@ -44,6 +56,14 @@ export const createSharedList = async (details: SharedListCreateArgs) => {
     }
 }
 
+/**
+ * Update the details of a given Shared List.
+ * 
+ * @param listId The unique ID of the Shared List to update
+ * @param newDetails The fields to update in the Shared List
+ * @returns The updated Shared List
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const updateSharedListDetails = async (listId: number, newDetails: SharedListUpdateArgs) => {
     // Build SQL query dynamically
     const fields = [];
@@ -81,6 +101,12 @@ export const updateSharedListDetails = async (listId: number, newDetails: Shared
     }
 }
 
+/**
+ * Delete a Shared List.
+ * 
+ * @param listId The unique ID of the Shared List to delete
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const deleteSharedList = async (listId: number) => {
     try {
         const result = await pool.query(
@@ -100,6 +126,15 @@ export const deleteSharedList = async (listId: number) => {
     }
 }
 
+/**
+ * Fetch the details of a single Shared List by ID. Details include :
+ * - The name and description of the SL
+ * - The list of all members of the SL
+ * 
+ * @param listId The unique ID of the Shared List
+ * @returns The details of the Shared List
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const getOneSharedList = async (listId: number) => {
     try {
         // 1. Get shared list details
@@ -124,6 +159,7 @@ export const getOneSharedList = async (listId: number) => {
 
         // 3. Reorganize and send back to caller
         return {
+            list_id: listId,
             name: resultSL.rows[0].name,
             description: resultSL.rows[0].description,
             members: resultMembers.rows
@@ -137,6 +173,14 @@ export const getOneSharedList = async (listId: number) => {
     }
 }
 
+/**
+ * Fetch a list of available Shared Lists for a given user
+ * 
+ * @param userId The user ID requesting the list of Shared Lists
+ * @returns An array of Shared Lists available to the user
+ * @throws ApiException (404, NO_SL_AVAILABLE) or DatabaseException
+ * (500, Internal server error)
+ */
 export const getAvailableSharedLists = async (userId: number) => {
     try {
         const result = await pool.query(
@@ -162,6 +206,24 @@ export const getAvailableSharedLists = async (userId: number) => {
     }
 }
 
+/**
+ * Verifies if a user has the specified minimum role required to perform an action
+ * on a given list.
+ * 
+ * Roles available are :
+ * - reader (read-only access to the SL)
+ * - commenter (can publish reviews on locations in the SL)
+ * - editor (can manage locations in the SL)
+ * - owner (can manage the SL itself and its members)
+ * 
+ * If the user does not satisfy the minimum role required, an ApiException with the
+ * HTTP status code 403 (Forbidden) is thrown to stop execution of the request
+ * 
+ * @param userId The user ID that makes the request
+ * @param listId The unique ID of the list that is being affected by the user
+ * @param roleRequired The minimum role required to perform the action
+ * @throws ApiException (403, Forbidden) or DatabaseException (500, Internal server error)
+ */
 export const checkSharedListPermissions = async (userId: number, listId: number, roleRequired: SharedListRoles) => {
     try {
         const result = await pool.query(
@@ -203,6 +265,15 @@ export const checkSharedListPermissions = async (userId: number, listId: number,
     }
 }
 
+/**
+ * Add a new member to a Shared List with a specific role
+ * 
+ * @param userId The unique ID of the user that joins the SL
+ * @param listId The unique ID of the SL
+ * @param role The role to give to the user upon joining the SL
+ * @throws ApiException (409, INVALID_ID or ALREADY_MEMBER) or DatabaseException
+ * (500, Internal server error)
+ */
 export const addMemberToList = async (userId: number, listId: number, role: SharedListRoles) => {
     try {
         await pool.query(
@@ -227,6 +298,14 @@ export const addMemberToList = async (userId: number, listId: number, role: Shar
     }
 }
 
+/**
+ * Remove a member from a Shared List
+ * 
+ * @param userId The unique ID of the user to remove from the SL
+ * @param listId The unique ID of the SL
+ * @throws ApiException (409, NOT_A_MEMBER) or DatabaseException (500, Internal
+ * server error)
+ */
 export const removeMemberFromList = async (userId: number, listId: number) => {
     try {
         const result = await pool.query(
@@ -246,7 +325,24 @@ export const removeMemberFromList = async (userId: number, listId: number) => {
     }
 }
 
+/**
+ * Update the role of a given user.
+ * 
+ * This function will throw an ApiException if newRole is set to owner. To transfer
+ * ownership of a SL, the `transferSLOwnership` function shall be used instead of
+ * this one, as it needs to perform multiple update operations.
+ * 
+ * @param userId The unique ID of the user to update
+ * @param listId The unique ID of the SL
+ * @param newRole The new role to give to the user ()
+ * @throws ApiException (409, ROLE_UPDATE_FAILED or INVALID_ROLE) or DatabaseException
+ * (500, Internal server error)
+ */
 export const changeSLMemberRole = async (userId: number, listId: number, newRole: SharedListRoles) => {
+    if (newRole === SharedListRoles.OWNER) {
+        throw new ApiException(409, "INVALID_ROLE", "This endpoint cannot be used for ownership transfers")
+    }
+    
     try {
         const result = await pool.query(
             "UPDATE shared_list_members SET role = $1 WHERE user_id = $2 AND list_id = $3 RETURNING *",
@@ -265,8 +361,25 @@ export const changeSLMemberRole = async (userId: number, listId: number, newRole
     }
 }
 
+/**
+ * Transfer the ownership of a Shared List to another member.
+ * 
+ * Uses a SQL transaction to ensure integrity during the ownership transfer, due
+ * to the multiple operations needed.
+ * 
+ * The current owner is given the editor role after ownership transfer.
+ * 
+ * @param oldOwner The user ID of the current owner of the SL
+ * @param newOwner The user ID of the new owner of the SL
+ * @param listId The unique ID of the SL
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const transferSLOwnership = async (oldOwner: number, newOwner: number, listId: number) => {
     const client = await pool.connect()
+
+    if (oldOwner == newOwner) {
+        throw new ApiException(409, "IDENTICAL_IDS", "The IDs of the old owner and the new owner are identical")
+    }
     
     try {
         // Begin a transaction

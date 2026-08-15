@@ -3,6 +3,17 @@ import type { Location, LocationUpdateArgs } from "../types/locations";
 import { pool } from "../utils/db";
 import fs from "fs"
 
+/**
+ * Create a new location in the database. This function can create locations
+ * for personal lists (tied to an account) and shared lists depending on the
+ * fields in the data parameter.
+ * 
+ * @param data Information about the location to create (ids, metadata and
+ * geographic information)
+ * @returns The inserted location in the database
+ * @throws ApiException (409, invalid ID) or DatabaseException (500, Internal
+ * server error)
+ */
 export const createLocation = async (data: Location) => {
     try {
         const result = await pool.query(
@@ -57,6 +68,21 @@ export const createLocation = async (data: Location) => {
     }
 }
 
+/**
+ * Update details of an existing location in the database using its id.
+ * 
+ * This function includes two optional parameters for security reasons. Only one
+ * parameter should be passed (otherwise, the function will throw an error)
+ * 
+ * @param newDetails The information to update in the database
+ * @param locationId The unique ID of the location to update
+ * @param listId Security parameter to prevent listId/locationId mismatch
+ * on shared lists and block unauthorized updates (optional)
+ * @param userId Security parameter to prevent userId/locationId mismatch
+ * on personal lists and block unauthorized updates (optional)
+ * @returns The updated location
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const updateLocation = async (newDetails: LocationUpdateArgs, locationId: number, listId?: number, userId?: number) => {
     // Throw an error if both listId and userId are defined (impossible)
     if (listId && userId) {
@@ -151,6 +177,19 @@ export const updateLocation = async (newDetails: LocationUpdateArgs, locationId:
     }
 }
 
+/**
+ * Delete a location from a shared/personal list.
+ * 
+ * This function includes two optional parameters for security reasons. Only one
+ * parameter should be passed (otherwise, the function will throw an error)
+ * 
+ * @param locationId The unique ID of the location to delete
+ * @param listId Security parameter to prevent listId/locationId mismatch
+ * on shared lists and block unauthorized updates (optional)
+ * @param userId Security parameter to prevent userId/locationId mismatch
+ * on personal lists and block unauthorized updates (optional)
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const deleteLocation = async (locationId: number, listId?: number, userId?: number) => {
     // Throw an error if both listId and userId are defined (impossible)
     if (listId && userId) {
@@ -179,17 +218,32 @@ export const deleteLocation = async (locationId: number, listId?: number, userId
     }
 }
 
-export const addPhotoToIndex = async (locationId: number, photoId: string) => {
+/**
+ * Add one photo to the database (the "index")
+ * 
+ * @param locationId The unique ID of the location linked to the photo
+ * @param imageId The unique UUID (name) of the photo
+ * @throws DatabaseException (500, Internal server error)
+ */
+export const addPhotoToIndex = async (locationId: number, imageId: string) => {
     try {
         await pool.query(
             "INSERT INTO gallery (id, location_id) VALUES ($1, $2)",
-            [photoId, locationId]
+            [imageId, locationId]
         )
     } catch (error) {
         throw new DatabaseException(error as Error)
     }
 }
 
+/**
+ * Deletes one photo from the database (the "index")
+ * 
+ * @param imageId The unique UUID (name) of the photo to delete
+ * @param locationId The location linked to the photo (used to prevent
+ * unauthorized deletions due to imageId/locationId mismatch)
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const deletePhoto = async (imageId: string, locationId: number) => {
     try {
         // Remove from the index
@@ -213,6 +267,13 @@ export const deletePhoto = async (imageId: string, locationId: number) => {
     }
 }
 
+/**
+ * Counts the number of photos saved in the index for a given location
+ * 
+ * @param locationId The unique ID of the location
+ * @returns The number of saved photos in the index
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const countPhotos = async (locationId: number) => {
     try {
         const result = await pool.query(
@@ -230,6 +291,23 @@ export const countPhotos = async (locationId: number) => {
     }
 }
 
+/**
+ * Function to manually check and prevent ID mismatch that could lead to faulty
+ * permission checks and unauthorized uploads/deletions of gallery images.
+ * 
+ * Exactly one optional parameter must be passed for the function to execute properly,
+ * otherwise, it will throw an error if there's either none/both parameters defined.
+ * 
+ * A failed verification (ID mismatch of non existent location) will throw a
+ * NotFoundException
+ * 
+ * @param locationId The unique ID of the location
+ * @param listId The unique ID of the list that must match the location, if checking
+ * against a shared list (optional)
+ * @param userId The unique ID of the user that must match the location, if checking
+ * against a personal list (optional)
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
 export const verifyIdMatch = async (locationId: number, listId?: number, userId?: number) => {
     // Throw an error if both listId and userId are defined (impossible)
     if (listId && userId) {

@@ -3,6 +3,14 @@ import type { UserRegistration } from "../types/users";
 import { pool } from "../utils/db";
 import { hashSync } from "bcrypt";
 
+/**
+ * Register a new user account in the database
+ * 
+ * @param user Account details of the user to insert
+ * @returns The unique ID of the new user
+ * @throws ApiException (409, username/email/discord already taken) or
+ * DatabaseException (500, Internal server error)
+ */
 export const createUser = async (user: UserRegistration) => {
     try {
         const hashedPassword = user.password
@@ -39,6 +47,12 @@ export const createUser = async (user: UserRegistration) => {
     }
 }
 
+/**
+ * Delete a user account from the database
+ * 
+ * @param userId The unique ID of the user to delete
+ * @throws DatabaseException (500, Internal server error)
+ */
 export const deleteUser = async (userId: number) => {
     try {
         await pool.query(
@@ -50,6 +64,13 @@ export const deleteUser = async (userId: number) => {
     }
 }
 
+/**
+ * Fetch a single user by ID
+ * 
+ * @param userId The unique ID of the user to fetch
+ * @returns The user's data (or `null` if not found)
+ * @throws DatabaseException (500, Internal server error)
+ */
 export const getOneUserById = async (userId: number) => {
     try {
         const result = await pool.query(
@@ -63,6 +84,17 @@ export const getOneUserById = async (userId: number) => {
     }
 }
 
+/**
+ * Fetch a single user by Discord ID
+ * 
+ * This function is mostly used for the Discord Oauth2 process to figure out
+ * whether to create a new account in the database or only generate credentials
+ * if the account is already registered
+ * 
+ * @param discordId The Discord ID of the user to fetch
+ * @returns The user's data (or `null` if not found)
+ * @throws DatabaseException (500, Internal server error)
+ */
 export const getOneUserByDiscordId = async (discordId: string) => {
     try {
         const result = await pool.query(
@@ -76,6 +108,16 @@ export const getOneUserByDiscordId = async (discordId: string) => {
     }
 }
 
+/**
+ * Fetch a single user by unique username
+ * 
+ * Note: this function is **NOT** a user search feature, it is made to match an
+ * exact username in the database to verify it the user exists or not.
+ * 
+ * @param username The username to look for in the database
+ * @returns The user's data (or `null` if not found)
+ * @throws DatabaseException (500, Internal server error)
+ */
 export const getOneUserByUsername = async (username: string) => {
     try {
         const result = await pool.query(
