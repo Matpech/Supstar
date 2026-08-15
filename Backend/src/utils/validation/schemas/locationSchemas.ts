@@ -26,6 +26,7 @@ const openingTimesSingleDaySchema = Joi.object({
 export const locationCreateSchema = Joi.object({
     name: Joi.string().min(3).max(255).required(),
     category: Joi.string().valid(...VALID_LOCATION_TYPES).required(),
+    price: Joi.number().min(0).required(),
     description: Joi.string().max(2000),
     opening_times: Joi.object({
         monday: openingTimesSingleDaySchema,
@@ -49,6 +50,7 @@ export const locationCreateSchema = Joi.object({
 export const locationUpdateSchema = Joi.object({
     name: Joi.string().min(3).max(255),
     category: Joi.string().valid(...VALID_LOCATION_TYPES),
+    price: Joi.number().min(0),
     description: Joi.string().max(2000),
     opening_times: Joi.object({
         monday: openingTimesSingleDaySchema,
@@ -71,4 +73,17 @@ export const locationUpdateSchema = Joi.object({
 
 export const galleryDeleteSchema = Joi.object({
     imageId: Joi.string().uuid().required()
+})
+
+export const locationSearchSchema = Joi.object({
+    query: Joi.string().min(1).max(255),
+    categories: Joi.array().items(Joi.string().valid(...VALID_LOCATION_TYPES)),
+    city: Joi.string().min(1).max(255),
+    country: Joi.string().length(2).valid(...VALID_ISO3166_CODES),
+    minimumScore: Joi.number().min(1).max(5),
+    prices: Joi.object({
+        min: Joi.number().min(0).required(),
+        max: Joi.number().min(0).required()
+    }),
+    statuses: Joi.array().items(Joi.string().valid(...VALID_STATUSES))
 })

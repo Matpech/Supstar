@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS locations (
 
     -- General information
     name VARCHAR(255) NOT NULL,
-    category location_types,
+    category location_types NOT NULL,
+    price REAL NOT NULL DEFAULT 0 CHECK (price > 0),
     description TEXT,
     opening_times JSONB,
     tags JSONB,
@@ -19,11 +20,18 @@ CREATE TABLE IF NOT EXISTS locations (
     full_address VARCHAR(255) NOT NULL,
     city VARCHAR(255) NOT NULL,
     country_code VARCHAR(2) NOT NULL, -- ISO 3166-1 country code
-    latitude NUMERIC NOT NULL,
-    longitude NUMERIC NOT NULL
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS gallery (
     id UUID PRIMARY KEY,
     location_id INTEGER REFERENCES locations(id) ON DELETE CASCADE
 );
+
+-- Search optimizations
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_locations_listid ON locations(list_id);
+CREATE INDEX idx_locations_userid ON locations(user_id);
+CREATE INDEX idx_locations_name_trgm ON locations USING gin (name gin_trgm_ops);
+CREATE INDEX idx_locations_desc_trgm ON locations USING gin (name gin_trgm_ops);

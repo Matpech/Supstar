@@ -1,5 +1,5 @@
-import { ApiException, DatabaseException, NotFoundException } from "../types/errors";
-import type { Location, LocationUpdateArgs } from "../types/locations";
+import { ApiException, DatabaseException, NotFoundException, ValidationException } from "../types/errors";
+import type { Location, LocationSearchParams, LocationUpdateArgs } from "../types/locations";
 import { pool } from "../utils/db";
 import fs from "fs"
 
@@ -24,6 +24,7 @@ export const createLocation = async (data: Location) => {
                     list_id,
                     name,
                     category,
+                    price,
                     description,
                     opening_times,
                     tags,
@@ -34,7 +35,7 @@ export const createLocation = async (data: Location) => {
                     latitude,
                     longitude
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 RETURNING *
             `,
             [
@@ -42,6 +43,7 @@ export const createLocation = async (data: Location) => {
                 data.list_id,
                 data.name,
                 data.category,
+                data.price,
                 data.description,
                 JSON.stringify(data.opening_times),
                 JSON.stringify(data.tags),
@@ -102,6 +104,11 @@ export const updateLocation = async (newDetails: LocationUpdateArgs, locationId:
     if (newDetails.category !== undefined) {
       fields.push(`category = $${index++}`);
       values.push(newDetails.category);
+    }
+
+    if (newDetails.price !== undefined) {
+        fields.push(`price = $${index++}`);
+        values.push(newDetails.price);
     }
 
     if (newDetails.description !== undefined) {
@@ -333,6 +340,128 @@ export const verifyIdMatch = async (locationId: number, listId?: number, userId?
         if (!result.rows[0]) {
             throw new NotFoundException("Location")
         }
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
+}
+
+/**
+ * Search the database for locations that match search parameters. This function
+ * allows to search the locations by :
+ * - Text search
+ * - Category (array)
+ * - City (exact)
+ * - Country
+ * - ~~Minimun score (through reviews)~~ **[WORK IN PROGRESS]**
+ * - Price range
+ * - Status (array)
+ * 
+ * @param search The object containing all the search filters
+ * @returns An array of matching locations
+ * @throws NotFoundException (if no matching location) or DatabaseException (500,
+ * Internal server error)
+ */
+export const getLocations = async (search: LocationSearchParams) => {
+    // Require exactly one ID (list/user)
+    if (search.listId && search.userId) {
+        throw new ValidationException("Cannot have both listId and userId as search parameters")
+    }
+
+    if (!search.listId && !search.userId) {
+        throw new ValidationException("At least one list/user ID is required")
+    }
+    
+    // Build SQL query dynamically
+    const fields = [];
+    const values: any[] = [search.listId ?? search.userId];
+    let index = 2;
+
+    if (search.query !== undefined) {
+        fields.push(`(l.name ILIKE '%'||$${index}||'%' OR l.description ILIKE '%'||$${index++}||'%')`)
+        values.push(search.query)
+    }
+
+    if (search.categories !== undefined && search.categories.length > 0) {
+        fields.push(`l.category = ANY($${index++})`)
+        values.push(search.categories)
+    }
+
+    if (search.city !== undefined) {
+        fields.push(`l.city ILIKE $${index++}`)
+        values.push(search.city)
+    }
+
+    if (search.country !== undefined) {
+        fields.push(`l.country_code = $${index++}`)
+        values.push(search.country.toUpperCase())
+    }
+
+    // TODO: Add minimum score filter
+
+    if (search.prices !== undefined) {
+        fields.push(`l.price BETWEEN $${index++} AND $${index++}`)
+        values.push(search.prices.min, search.prices.max)
+    }
+
+    if (search.statuses !== undefined) {
+        fields.push(`l.status = ANY($${index++})`)
+        values.push(search.statuses)
+    }
+
+    const sqlQuery = `
+        SELECT l.*
+        FROM locations l
+        WHERE ${search.listId ? `list_id = $1` : `user_id = $1`}
+        ${fields.length > 0 ? ' AND ' : ''}${fields.join(" AND ")}
+    `
+
+    console.log(sqlQuery)
+
+    // Executing the SQL query
+    try {
+        const result = await pool.query(sqlQuery, values)
+
+        if (result.rowCount === 0) {
+            throw new NotFoundException("Locations")
+        }
+
+        return result.rows
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
+}
+
+/**
+ * Fetch a single location by ID, enforcing listId/locationId integrity.
+ * 
+ * @param listId The unique ID of the list that includes the location
+ * @param locationId The unique ID of the location to fetch
+ * @returns The location info
+ * @throws NotFoundException or DatabaseException (500, Internal server error)
+ */
+export const getOneLocation = async (listId: number, locationId: number) => {
+    try {
+        const result = await pool.query(
+            `
+                SELECT l.*
+                FROM locations l
+                WHERE l.list_id = $1 AND l.id = $2
+            `, [listId, locationId]
+        )
+
+        if (!result.rows[0]) {
+            throw new NotFoundException("Location")
+        }
+
+        return result.rows[0]
     } catch (error) {
         if (error instanceof ApiException) {
             throw error
