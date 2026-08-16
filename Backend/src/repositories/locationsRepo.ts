@@ -502,6 +502,16 @@ export const getOneLocation = async (locationId: number, listId?: number, userId
     }
 }
 
+/**
+ * Export a list of all locations from a Shared/Personal List and
+ * their reviews.
+ * 
+ * @param listId ID of the Shared List to export
+ * @param userId ID of the Personal List to export
+ * @returns Array of locations with reviews
+ * @throws ApiException (404 EXPORT_NO_DATA) or DatabaseException (500
+ * Internal server error)
+ */
 export const exportLocations = async (listId?: number, userId?: number) => {
     // Require exactly one ID (list/user)
     if (listId && userId) {
@@ -558,4 +568,87 @@ export const exportLocations = async (listId?: number, userId?: number) => {
 
         throw new DatabaseException(error as Error)
     }
+}
+
+/**
+ * Bulk import locations into the database from an array of locations.
+ * 
+ * @param locations The array of locations to insert
+ * @returns The number of inserted rows
+ * @throws DatabaseException (500 Internal server error)
+ */
+export const bulkImportLocations = async (locations: Location[]) => {
+    if (locations.length === 0) {
+        return 0
+    }
+
+    const values: any[] = []
+
+    const placeholders = locations.map((location, index) => {
+        const offset = index * 14
+
+        values.push(
+            location.user_id,
+            location.list_id,
+            location.name,
+            location.category,
+            location.price,
+            location.description,
+            JSON.stringify(location.opening_times),
+            JSON.stringify(location.tags),
+            location.status,
+            location.full_address,
+            location.city,
+            location.country_code,
+            location.latitude,
+            location.longitude
+        )
+
+        return `(
+            $${offset + 1},
+            $${offset + 2},
+            $${offset + 3},
+            $${offset + 4},
+            $${offset + 5},
+            $${offset + 6},
+            $${offset + 7},
+            $${offset + 8},
+            $${offset + 9},
+            $${offset + 10},
+            $${offset + 11},
+            $${offset + 12},
+            $${offset + 13},
+            $${offset + 14}
+        )`
+    })
+
+    try {
+        const result = await pool.query(
+            `
+                INSERT INTO locations
+                (
+                    user_id,
+                    list_id,
+                    name,
+                    category,
+                    price,
+                    description,
+                    opening_times,
+                    tags,
+                    status,
+                    full_address,
+                    city,
+                    country_code,
+                    latitude,
+                    longitude
+                )
+                VALUES ${placeholders.join(", ")}
+            `, values
+        )
+
+        return result.rowCount
+    } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+
 }

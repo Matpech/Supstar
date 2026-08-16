@@ -87,3 +87,5 @@ export const locationSearchSchema = Joi.object({
     }),
     statuses: Joi.array().items(Joi.string().valid(...VALID_STATUSES))
 })
+
+export const locationImportSchema = Joi.array().items(locationCreateSchema)
