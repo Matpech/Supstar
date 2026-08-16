@@ -1,9 +1,6 @@
 import { Router } from "express";
-import { InvalidTokenException, NotFoundException } from "../types/errors";
-import { deleteUser, getOneUserById } from "../repositories/usersRepo";
-import validate from "../utils/validation/validator";
-import { verifyLoginCredentials } from "../utils/security";
-import type { User } from "../types/users";
+import { InvalidTokenException } from "../types/errors";
+import { deleteUser, getUserStats } from "../repositories/usersRepo";
 import { requireLoggedIn } from "../middlewares/authMiddlewares";
 
 const router = Router()
@@ -15,6 +12,15 @@ router.delete("/close-account", requireLoggedIn, async (req, res) => {
 
     await deleteUser(req.user.id)
     return res.sendStatus(204)
+})
+
+router.get("/stats", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const stats = await getUserStats(req.user.id)
+    return res.json(stats)
 })
 
 export default router

@@ -1,4 +1,4 @@
-import { ApiException, DatabaseException } from "../types/errors";
+import { ApiException, DatabaseException, NotFoundException } from "../types/errors";
 import type { UserRegistration } from "../types/users";
 import { pool } from "../utils/db";
 import { hashSync } from "bcrypt";
@@ -127,6 +127,63 @@ export const getOneUserByUsername = async (username: string) => {
 
         return result.rows[0] ?? null
     } catch (error) {
+        throw new DatabaseException(error as Error)
+    }
+}
+
+/**
+ * Fetch statistics about a given user. This function collects :
+ * - The number of locations in the user's personal list
+ * - The number of reviews published by the user
+ * - The average rating given by the user
+ * - The number of shared lists owned by the user
+ * 
+ * Note: the functions throws an error if the user does not exist
+ * 
+ * @param userId The unique ID of the user
+ * @returns Statistics about the user
+ * @throws NotFoundException or DatabaseException (500 Internal server error)
+ */
+export const getUserStats = async (userId: number) => {
+    try {
+        const result = await pool.query(
+            `
+                SELECT
+                    (
+                        SELECT COUNT(*)
+                        FROM locations
+                        WHERE user_id = $1
+                    )::integer AS personal_locations,
+                    (
+                        SELECT COUNT(*)
+                        FROM reviews
+                        WHERE reviewer_id = $1
+                    )::integer AS reviews_published,
+                    (
+                        SELECT ROUND(AVG(rating), 2)
+                        FROM reviews
+                        WHERE reviewer_id = $1
+                    )::real AS average_rating,
+                    (
+                        SELECT COUNT(*)
+                        FROM shared_lists
+                        WHERE owner_id = $1
+                    )::integer AS lists_owned
+                FROM users
+                WHERE id = $1
+            `, [userId]
+        )
+
+        if (!result.rows[0]) {
+            throw new NotFoundException("User")
+        }
+
+        return result.rows[0]
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
         throw new DatabaseException(error as Error)
     }
 }
