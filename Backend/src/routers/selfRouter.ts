@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { InvalidTokenException } from "../types/errors";
-import { deleteUser, exportPersonalListLocations, getUserStats } from "../repositories/usersRepo";
+import { deleteUser, getUserStats } from "../repositories/usersRepo";
 import { requireLoggedIn } from "../middlewares/authMiddlewares";
+import { exportLocations } from "../repositories/locationsRepo";
 
 const router = Router()
 
@@ -28,8 +29,8 @@ router.get("/pl-export", requireLoggedIn, async (req, res) => {
         throw new InvalidTokenException()
     }
 
-    const data = await exportPersonalListLocations(req.user.id)
-    res.json(data)
+    const data = await exportLocations(undefined, req.user.id)
+    res.json({locations: data})
 })
 
 export default router

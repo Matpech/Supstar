@@ -7,6 +7,7 @@ import { sharedListAddMemberSchema, sharedListCreateSchema, sharedListRemoveMemb
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { SharedListRoles } from "../types/sharedLists";
 import SLLocationsRouter from "./sharedListLocationsRouter";
+import { exportLocations } from "../repositories/locationsRepo";
 
 const router = Router()
 
@@ -146,6 +147,26 @@ router.post("/:sl_id/transfer-ownership", requireLoggedIn, async (req, res) => {
 
     await transferSLOwnership(req.user.id, userId, sl_id.value)
     return res.sendStatus(204)
+})
+
+router.get("/:sl_id/export", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+    if (!sl_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+    await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.READER)
+
+    const details = await getOneSharedList(sl_id.value)
+    const locations = await exportLocations(sl_id.value)
+    return res.json({
+        name: details.name,
+        description: details.description,
+        locations
+    })
 })
 
 router.use("/:sl_id/locations", SLLocationsRouter)

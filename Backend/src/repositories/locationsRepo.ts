@@ -501,3 +501,61 @@ export const getOneLocation = async (locationId: number, listId?: number, userId
         throw new DatabaseException(error as Error)
     }
 }
+
+export const exportLocations = async (listId?: number, userId?: number) => {
+    // Require exactly one ID (list/user)
+    if (listId && userId) {
+        throw new ValidationException("Cannot have both listId and userId as search parameters")
+    }
+
+    if (!listId && !userId) {
+        throw new ValidationException("At least one list/user ID is required")
+    }
+    
+    try {
+        const result = await pool.query(
+            `
+                SELECT
+                    l.name,
+                    l.category,
+                    l.description,
+                    l.opening_times,
+                    l.tags,
+                    l.status,
+                    l.full_address,
+                    l.city,
+                    l.country_code,
+                    l.latitude,
+                    l.longitude,
+                    l.price,
+                    ROUND(AVG(r.rating), 2)::real AS average_rating,
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'username', u.username,
+                                'rating', r.rating,
+                                'comment', r.comment
+                            )
+                        ) FILTER (WHERE r.id IS NOT NULL), '[]'::json
+                    ) AS reviews
+                FROM locations l
+                LEFT JOIN reviews r ON r.location_id = l.id
+                LEFT JOIN users u ON u.id = r.reviewer_id
+                WHERE ${listId ? 'l.list_id' : 'l.user_id'} = $1
+                GROUP BY l.id
+            `, [listId || userId]
+        )
+
+        if (result.rowCount === 0) {
+            throw new ApiException(404, "EXPORT_NO_DATA", "There is no data to export")
+        }
+
+        return result.rows
+    } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+
+        throw new DatabaseException(error as Error)
+    }
+}
