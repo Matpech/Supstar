@@ -416,7 +416,7 @@ export const getLocations = async (search: LocationSearchParams) => {
     }
 
     const sqlQuery = `
-        SELECT l.*, ROUND(AVG(r.rating), 2) AS average_score
+        SELECT l.*, ROUND(AVG(r.rating), 2)::real AS average_rating
         FROM locations l
         LEFT JOIN reviews r ON r.location_id = l.id
         WHERE ${search.listId ? `list_id = $1` : `user_id = $1`}
@@ -475,7 +475,7 @@ export const getOneLocation = async (locationId: number, listId?: number, userId
                         SELECT ROUND(AVG(r.rating), 2)
                         FROM reviews r
                         WHERE r.location_id = l.id
-                    ) AS average_score,
+                    )::real AS average_rating,
                     (
                         SELECT ARRAY_AGG(g.id)
                         FROM gallery g
