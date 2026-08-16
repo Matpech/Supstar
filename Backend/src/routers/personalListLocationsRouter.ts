@@ -9,20 +9,9 @@ import { countPhotos, createLocation, deleteLocation, deletePhoto, getLocations,
 import { upload, validateImageFile } from "../utils/fileUploads";
 import fs from "fs"
 import { processLocationPhoto } from "../utils/imageProcessing";
+import PLReviewsRouter from "./personalListReviewsRouter";
 
 const router = Router({ mergeParams: true })
-
-/**
- * The following endpoints need to be implemented :
- * - GET /                (search locations)
- * - GET /:location_id    (get one location)
- * 
- * Another child router for PL reviews will also need to be created :
- * - POST /:location_id/reviews              (publish review)
- * - PATCH /:location_id/reviews/:review_id  (update review)
- * - DELETE /:location_id/reviews/:review_id (delete review)
- * - GET /:location_id/reviews               (get all reviews)
- */
 
 router.post("/", requireLoggedIn, async (req, res) => {
     if (!req.user) {
@@ -201,5 +190,7 @@ router.get("/:location_id", requireLoggedIn, async (req, res) => {
     const result = await getOneLocation(location_id.value, undefined, user_id.value)
     return res.json(result)
 })
+
+router.use("/:location_id/reviews", PLReviewsRouter)
 
 export default router
