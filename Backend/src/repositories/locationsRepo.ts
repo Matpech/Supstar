@@ -443,15 +443,30 @@ export const getLocations = async (search: LocationSearchParams) => {
 }
 
 /**
- * Fetch a single location by ID, enforcing listId/locationId integrity.
+ * Fetch a single location by ID, enforcing listId/locationId integrity if needed.
  * 
- * @param listId The unique ID of the list that includes the location
  * @param locationId The unique ID of the location to fetch
+ * @param listId The unique ID of the list that includes the location (optional,
+ * used for Shared Lists)
+ * @param userId The unique ID of the user (optional, used for Personal Lists)
  * @returns The location info
  * @throws NotFoundException or DatabaseException (500, Internal server error)
  */
-export const getOneLocation = async (listId: number, locationId: number) => {
+export const getOneLocation = async (locationId: number, listId?: number, userId?: number) => {
+    // Throw an error if both listId and userId are defined (impossible)
+    if (listId && userId) {
+        throw new Error("Cannot have both listId and userId defined")
+    }
+    
     try {
+        const values = [locationId]
+        if (listId) {
+            values.push(listId)
+        }
+        if (userId) {
+            values.push(userId)
+        }
+
         const result = await pool.query(
             `
                 SELECT
@@ -467,8 +482,10 @@ export const getOneLocation = async (listId: number, locationId: number) => {
                         WHERE g.location_id = l.id
                     ) AS images
                 FROM locations l
-                WHERE l.list_id = $1 AND l.id = $2
-            `, [listId, locationId]
+                WHERE l.id = $1
+                ${listId ? ' AND l.list_id = $2' : ''}
+                ${userId ? ' AND l.user_id = $2' : ''}
+            `, values
         )
 
         if (!result.rows[0]) {

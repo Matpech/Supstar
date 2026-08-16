@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { requireLoggedIn } from "../middlewares/authMiddlewares";
 import { ApiException, InvalidTokenException, ValidationException } from "../types/errors";
-import type { Location, LocationUpdateArgs } from "../types/locations";
+import type { Location, LocationSearchParams, LocationUpdateArgs } from "../types/locations";
 import validate from "../utils/validation/validator";
-import { galleryDeleteSchema, locationCreateSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
+import { galleryDeleteSchema, locationCreateSchema, locationSearchSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
-import { countPhotos, createLocation, deleteLocation, deletePhoto, updateLocation, verifyIdMatch } from "../repositories/locationsRepo";
+import { countPhotos, createLocation, deleteLocation, deletePhoto, getLocations, getOneLocation, updateLocation, verifyIdMatch } from "../repositories/locationsRepo";
 import { upload, validateImageFile } from "../utils/fileUploads";
 import fs from "fs"
 import { processLocationPhoto } from "../utils/imageProcessing";
@@ -159,6 +159,47 @@ router.delete("/:location_id/gallery", requireLoggedIn, async (req, res) => {
 
     await deletePhoto(imageId, location_id.value)
     return res.sendStatus(204)
+})
+
+router.get("/", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const data = req.body
+        ? validate(req, locationSearchSchema)
+        : null
+
+    const user_id = numericIdSchema.validate(parseInt(req.params.user_id as string))
+    if (!user_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+
+    const params: LocationSearchParams = data
+        ? { userId: user_id.value, ...data }
+        : { userId: user_id.value }
+
+    const results = await getLocations(params)
+
+    return res.json({
+        total: results.length,
+        results
+    })
+})
+
+router.get("/:location_id", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const user_id = numericIdSchema.validate(parseInt(req.params.user_id as string))
+    const location_id = numericIdSchema.validate(parseInt(req.params.location_id as string))
+    if (!user_id.value || !location_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+
+    const result = await getOneLocation(location_id.value, undefined, user_id.value)
+    return res.json(result)
 })
 
 export default router

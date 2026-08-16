@@ -187,7 +187,7 @@ router.get("/:location_id", requireLoggedIn, async (req, res) => {
     }
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.READER)
 
-    const result = await getOneLocation(sl_id.value, location_id.value)
+    const result = await getOneLocation(location_id.value, sl_id.value)
     return res.json(result)
 })
 
