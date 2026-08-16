@@ -1,13 +1,16 @@
 import { Router } from "express";
 import { requireLoggedIn } from "../middlewares/authMiddlewares";
-import { InvalidTokenException, ValidationException } from "../types/errors";
+import { ApiException, InvalidTokenException, ValidationException } from "../types/errors";
 import { addMemberToList, changeSLMemberRole, checkSharedListPermissions, createSharedList, deleteSharedList, getAvailableSharedLists, getOneSharedList, removeMemberFromList, transferSLOwnership, updateSharedListDetails } from "../repositories/sharedListsRepo";
 import validate from "../utils/validation/validator";
 import { sharedListAddMemberSchema, sharedListCreateSchema, sharedListRemoveMemberSchema, sharedListUpdateMemberRoleSchema, sharedListUpdateSchema } from "../utils/validation/schemas/sharedListsSchemas";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { SharedListRoles } from "../types/sharedLists";
 import SLLocationsRouter from "./sharedListLocationsRouter";
-import { exportLocations } from "../repositories/locationsRepo";
+import { bulkImportLocations, exportLocations } from "../repositories/locationsRepo";
+import { upload } from "../utils/fileUploads";
+import fs from "fs";
+import { sanitizeImportedData } from "../utils/imports";
 
 const router = Router()
 
@@ -167,6 +170,45 @@ router.get("/:sl_id/export", requireLoggedIn, async (req, res) => {
         description: details.description,
         locations
     })
+})
+
+router.post("/:sl_id/import", requireLoggedIn, upload.single('data'), async (req, res) => {
+    try {
+        if (!req.user) {
+            throw new InvalidTokenException()
+        }
+
+        if (!req.file) {
+            throw new ValidationException("You must upload a file")
+        }
+
+        // Verify permissions
+        const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
+        if (!sl_id.value) {
+            throw new ValidationException("Invalid numeric ID")
+        }
+        await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.EDITOR)
+
+        // Sanitize input
+        const rawData = fs.readFileSync(req.file.path).toString()
+        const rawJson = JSON.parse(rawData)
+        if (!rawJson.locations) {
+            throw new ValidationException("No locations found in the import file")
+        }
+        const sanitizedData = sanitizeImportedData(rawJson.locations, sl_id.value)
+
+        // Bulk insert in the DB
+        const insertedCount = await bulkImportLocations(sanitizedData)
+        return res.json({ insertedCount })
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            throw new ApiException(422, "PARSING_ERROR", "Failed to parse JSON file")
+        }
+
+        throw error
+    } finally {
+        if (req.file) fs.unlinkSync(req.file?.path)
+    }
 })
 
 router.use("/:sl_id/locations", SLLocationsRouter)
