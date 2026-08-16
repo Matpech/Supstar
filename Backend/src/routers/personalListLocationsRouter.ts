@@ -3,9 +3,12 @@ import { requireLoggedIn } from "../middlewares/authMiddlewares";
 import { ApiException, InvalidTokenException, ValidationException } from "../types/errors";
 import type { Location, LocationUpdateArgs } from "../types/locations";
 import validate from "../utils/validation/validator";
-import { locationCreateSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
+import { galleryDeleteSchema, locationCreateSchema, locationUpdateSchema } from "../utils/validation/schemas/locationSchemas";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
-import { createLocation, deleteLocation, updateLocation } from "../repositories/locationsRepo";
+import { countPhotos, createLocation, deleteLocation, deletePhoto, updateLocation, verifyIdMatch } from "../repositories/locationsRepo";
+import { upload, validateImageFile } from "../utils/fileUploads";
+import fs from "fs"
+import { processLocationPhoto } from "../utils/imageProcessing";
 
 const router = Router({ mergeParams: true })
 
@@ -13,8 +16,6 @@ const router = Router({ mergeParams: true })
  * The following endpoints need to be implemented :
  * - GET /                (search locations)
  * - GET /:location_id    (get one location)
- * 
- * + The gallery endpoints also
  * 
  * Another child router for PL reviews will also need to be created :
  * - POST /:location_id/reviews              (publish review)
@@ -80,6 +81,83 @@ router.delete("/:location_id", requireLoggedIn, async (req, res) => {
     }
 
     await deleteLocation(location_id.value, undefined, req.user.id)
+    return res.sendStatus(204)
+})
+
+router.post("/:location_id/gallery", requireLoggedIn, upload.array('images', 10), async (req, res) => {
+    try {
+        if (!req.user) {
+            throw new InvalidTokenException()
+        }
+
+        const user_id = numericIdSchema.validate(parseInt(req.params.user_id as string))
+        const location_id = numericIdSchema.validate(parseInt(req.params.location_id as string))
+        if (!user_id.value || !location_id.value) {
+            throw new ValidationException("Invalid numeric ID")
+        }
+
+        if (req.user.id !== user_id.value) {
+            throw new ApiException(403, "PL_ACCESS_DENIED", "You do not have permission to perform this action")
+        }
+
+        await verifyIdMatch(location_id.value, undefined, req.user.id)
+
+        // Check if the file array is empty
+        if (!req.files || req.files.length === 0) {
+            throw new ValidationException("You must upload at least 1 image file")
+        }
+
+        // Only allow 10 images for a location
+        const currentImageCount = await countPhotos(location_id.value)
+        if (currentImageCount + req.files.length > 10) {
+            throw new ApiException(409, "IMAGE_LIMIT_REACHED", "Cannot have more than 10 images on a location")
+        }
+
+        const files = req.files as Express.Multer.File[]
+        const paths = files.map(f => f.path)
+    
+        // Validate all images before processing (prevents partial upload, all or nothing)
+        for (const path of paths) {
+            await validateImageFile(path)
+        }
+
+        // Process images
+        for (const path of paths) {
+            await processLocationPhoto(path, location_id.value)
+        }
+
+        return res.sendStatus(201)
+    } catch (error) {
+        throw error
+    } finally {
+        // Clean up uploads directory once finished
+        const files = req.files as Express.Multer.File[]
+        const paths = files.map(f => f.path)
+        for (const path of paths) {
+            fs.unlinkSync(path)
+        }
+    }
+})
+
+router.delete("/:location_id/gallery", requireLoggedIn, async (req, res) => {
+    if (!req.user) {
+        throw new InvalidTokenException()
+    }
+
+    const { imageId } = validate(req, galleryDeleteSchema) as { imageId: string }
+    const user_id = numericIdSchema.validate(parseInt(req.params.user_id as string))
+    const location_id = numericIdSchema.validate(parseInt(req.params.location_id as string))
+    if (!user_id.value || !location_id.value) {
+        throw new ValidationException("Invalid numeric ID")
+    }
+
+    if (req.user.id !== user_id.value) {
+        throw new ApiException(403, "PL_ACCESS_DENIED", "You do not have permission to perform this action")
+    }
+
+    await verifyIdMatch(location_id.value, undefined, req.user.id)
+
+    await deletePhoto(imageId, location_id.value)
     return res.sendStatus(204)
 })
 
