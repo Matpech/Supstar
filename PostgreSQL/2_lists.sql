@@ -14,3 +14,7 @@ CREATE TABLE IF NOT EXISTS shared_list_members (
     role list_roles NOT NULL DEFAULT 'reader',
     PRIMARY KEY (list_id, user_id)
 );
+
+CREATE INDEX idx_sl_ownerid ON shared_lists(owner_id);
+CREATE INDEX idx_slm_listid ON shared_list_members(list_id);
+CREATE INDEX idx_slm_userid ON shared_list_members(user_id);
