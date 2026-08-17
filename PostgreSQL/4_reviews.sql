@@ -6,3 +6,6 @@ CREATE TABLE IF NOT EXISTS reviews (
     comment TEXT,
     UNIQUE (location_id, reviewer_id)
 );
+
+CREATE INDEX idx_reviews_locationid ON reviews(location_id);
+CREATE INDEX idx_reviews_reviewerid ON reviews(reviewer_id);
