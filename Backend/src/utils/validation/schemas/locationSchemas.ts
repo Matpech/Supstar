@@ -16,6 +16,12 @@ const VALID_STATUSES = [
     'favorite'
 ]
 
+const VALID_SORT_OPTIONS = [
+    'name',
+    'average_rating',
+    'price'
+]
+
 const VALID_ISO3166_CODES = Object.keys(countryCodes)
 
 const openingTimesSingleDaySchema = Joi.object({
@@ -85,7 +91,12 @@ export const locationSearchSchema = Joi.object({
         min: Joi.number().min(0).required(),
         max: Joi.number().min(0).required()
     }),
-    statuses: Joi.array().items(Joi.string().valid(...VALID_STATUSES))
+    statuses: Joi.array().items(Joi.string().valid(...VALID_STATUSES)),
+
+    sorting: Joi.object({
+        sort_by: Joi.string().valid(...VALID_SORT_OPTIONS).required(),
+        order: Joi.string().valid('asc', 'desc').required()
+    })
 })
 
 export const locationImportSchema = Joi.array().items(locationCreateSchema)

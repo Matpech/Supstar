@@ -1,5 +1,5 @@
 import { ApiException, DatabaseException, NotFoundException, ValidationException } from "../types/errors";
-import type { Location, LocationSearchParams, LocationUpdateArgs } from "../types/locations";
+import { LocationSortOptions, type Location, type LocationSearchParams, type LocationUpdateArgs } from "../types/locations";
 import { pool } from "../utils/db";
 import fs from "fs"
 
@@ -380,6 +380,7 @@ export const getLocations = async (search: LocationSearchParams) => {
     const values: any[] = [search.listId ?? search.userId];
     let index = 2;
 
+    // Add fields and values in the query depending on defined parameters
     if (search.query !== undefined) {
         fields.push(`(l.name ILIKE '%'||$${index}||'%' OR l.description ILIKE '%'||$${index++}||'%')`)
         values.push(search.query)
@@ -415,14 +416,27 @@ export const getLocations = async (search: LocationSearchParams) => {
         values.push(search.statuses)
     }
 
+    // Handle sorting options
+    let sortQuery
+    if (search.sorting === undefined) {
+        sortQuery = "ORDER BY LOWER(name) DESC"
+    } else {
+        if (search.sorting.sort_by === LocationSortOptions.ALPHABETICAL) sortQuery = `ORDER BY LOWER(name) ${search.sorting.order.toUpperCase()}`
+        else sortQuery = `ORDER BY ${search.sorting.sort_by} ${search.sorting.order.toUpperCase()} NULLS LAST`
+    }
+
+    // Assemble the final request string
     const sqlQuery = `
         SELECT l.*, ROUND(AVG(r.rating), 2)::real AS average_rating
         FROM locations l
         LEFT JOIN reviews r ON r.location_id = l.id
-        WHERE ${search.listId ? `list_id = $1` : `user_id = $1`}
+        WHERE ${search.listId ? `l.list_id = $1` : `l.user_id = $1`}
         ${fields.length > 0 ? ' AND ' : ''}${fields.join(" AND ")}
         GROUP BY l.id
+        ${sortQuery}
     `
+
+    console.log(sqlQuery)
 
     // Executing the SQL query
     try {

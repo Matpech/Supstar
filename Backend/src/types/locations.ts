@@ -67,6 +67,12 @@ export interface LocationUpdateArgs {
     longitude?: number
 }
 
+export enum LocationSortOptions {
+    ALPHABETICAL = "name",
+    RATING = "average_rating",
+    PRICE = "price"
+}
+
 /**
  * List of search parameters that can be used to look for locations in
  * the database, including :
@@ -89,4 +95,9 @@ export interface LocationSearchParams {
         max: number
     }
     statuses?: LocationStatus[]
+
+    sorting?: {
+        sort_by: LocationSortOptions
+        order: 'asc' | 'desc'
+    }
 }
