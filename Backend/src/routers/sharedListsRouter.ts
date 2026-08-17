@@ -37,7 +37,7 @@ router.get("/:sl_id", requireLoggedIn, async (req, res) => {
     }
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.READER)
 
-    const listDetails = await getOneSharedList(sl_id.value)
+    const listDetails = await getOneSharedList(sl_id.value, req.user.id)
     return res.json(listDetails)
 })
 
@@ -163,7 +163,7 @@ router.get("/:sl_id/export", requireLoggedIn, async (req, res) => {
     }
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.READER)
 
-    const details = await getOneSharedList(sl_id.value)
+    const details = await getOneSharedList(sl_id.value, req.user.id)
     const locations = await exportLocations(sl_id.value)
     return res.json({
         name: details.name,

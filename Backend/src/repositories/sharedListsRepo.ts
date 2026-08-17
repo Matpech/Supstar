@@ -135,12 +135,18 @@ export const deleteSharedList = async (listId: number) => {
  * @returns The details of the Shared List
  * @throws NotFoundException or DatabaseException (500, Internal server error)
  */
-export const getOneSharedList = async (listId: number) => {
+export const getOneSharedList = async (listId: number, userId: number) => {
     try {
         // 1. Get shared list details
         const resultSL = await pool.query(
-            "SELECT * FROM shared_lists WHERE id = $1",
-            [listId]
+            `
+                SELECT
+                    sl.*,
+                    slm.role
+                FROM shared_lists sl
+                INNER JOIN shared_list_members slm ON slm.user_id = $2
+                WHERE id = $1
+            `, [listId, userId]
         )
 
         if (!resultSL.rows[0]) {
@@ -162,6 +168,7 @@ export const getOneSharedList = async (listId: number) => {
             list_id: listId,
             name: resultSL.rows[0].name,
             description: resultSL.rows[0].description,
+            role: resultSL.rows[0].role,
             members: resultMembers.rows
         }
     } catch (error) {
