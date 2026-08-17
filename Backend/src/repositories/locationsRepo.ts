@@ -436,8 +436,6 @@ export const getLocations = async (search: LocationSearchParams) => {
         ${sortQuery}
     `
 
-    console.log(sqlQuery)
-
     // Executing the SQL query
     try {
         const result = await pool.query(sqlQuery, values)

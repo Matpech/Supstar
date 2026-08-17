@@ -35,3 +35,4 @@ CREATE INDEX idx_locations_listid ON locations(list_id);
 CREATE INDEX idx_locations_userid ON locations(user_id);
 CREATE INDEX idx_locations_name_trgm ON locations USING gin (name gin_trgm_ops);
 CREATE INDEX idx_locations_desc_trgm ON locations USING gin (name gin_trgm_ops);
+CREATE INDEX idx_locations_name_lowercase ON locations(LOWER(name));
