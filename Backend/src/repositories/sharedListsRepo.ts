@@ -1,4 +1,4 @@
-import { ApiException, DatabaseException, NotFoundException, NotImplementedException } from "../types/errors";
+import { ApiException, DatabaseException, NotFoundException } from "../types/errors";
 import { SharedListRoles, type SharedListCreateArgs, type SharedListUpdateArgs } from "../types/sharedLists";
 import { pool } from "../utils/db";
 
