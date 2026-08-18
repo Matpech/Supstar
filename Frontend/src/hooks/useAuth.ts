@@ -53,6 +53,8 @@ export function useAuth() {
         // Decode JWT to extract user data
         const jwtPayload = response.json.token.split(".")[1]
         const userData = JSON.parse(decodeBase64(jwtPayload))
+        delete userData.iat
+        delete userData.exp
 
         // Save user data and credentials
         context.login(
