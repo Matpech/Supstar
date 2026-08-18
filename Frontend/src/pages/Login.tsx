@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import type { ApiError } from "../types/api";
 import { Link, useNavigate } from "react-router-dom";
+import { Gamepad2 } from "lucide-react";
 
 function Login() {
     const [email, setEmail] = useState("")
@@ -109,6 +110,23 @@ function Login() {
                             Log in
                         </button>
                     </form>
+
+                    {/* TODO: Replace window.location.href with navigate("/api/auth/discord/login") later */}
+                    <button
+                        className="
+                            w-full rounded-lg bg-violet-600 px-4 py-3 mt-2
+                            flex justify-center items-center gap-2
+                            text-sm font-semibold text-white
+                            shadow-sm transition
+                            hover:bg-violet-700
+                            focus:outline-none focus:ring-2
+                            focus:ring-violet-500 focus:ring-offset-2
+                            active:bg-violet-800
+                        "
+                        onClick={() => window.location.href = "http://localhost:8080/api/auth/discord/login"}
+                    >
+                        <Gamepad2 height={24} /> Log in via Discord
+                    </button>
 
                     {/* Register */}
                     <p className="mt-6 text-center text-sm text-gray-500">
