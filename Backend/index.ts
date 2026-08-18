@@ -3,6 +3,7 @@ import bodyParser from "body-parser"
 import { pool } from "./src/utils/db"
 import { errorHandler } from "./src/middlewares/errorHandler"
 import { jwtMiddleware } from "./src/middlewares/jwtMiddleware"
+import cors from "cors"
 
 import authRouter from "./src/routers/authRouter"
 import selfRouter from "./src/routers/selfRouter"
@@ -16,6 +17,12 @@ const app = Express()
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(jwtMiddleware)
+app.use(cors({
+    origin: [
+        "http://localhost:5173"
+        // Production will be added later
+    ]
+}))
 
 // Test/Healthcheck endpoint
 app.get("/test", async (req, res) => {
