@@ -13,6 +13,10 @@ export function useAuth() {
     }
 
     async function login(email: string, password: string) {
+        if (!context) {
+            throw new Error("useAuth must be used inside AuthProvider")
+        }
+
         // Send a login request using provided credentials
         const response = await request("/auth/login", {
             method: "POST",
@@ -40,6 +44,10 @@ export function useAuth() {
     }
 
     async function register(email: string, username: string, password: string) {
+        if (!context) {
+            throw new Error("useAuth must be used inside AuthProvider")
+        }
+
         // Send a registration request
         const response = await request("/auth/register", {
             method: "POST",
@@ -67,6 +75,10 @@ export function useAuth() {
     }
 
     async function logout() {
+        if (!context) {
+            throw new Error("useAuth must be used inside AuthProvider")
+        }
+        
         if (!context.sessionId) return
 
         // Invalidate session

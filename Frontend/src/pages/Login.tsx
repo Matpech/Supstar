@@ -111,8 +111,7 @@ function Login() {
                         </button>
                     </form>
 
-                    {/* TODO: Replace window.location.href with navigate("/api/auth/discord/login") later */}
-                    <button
+                    <a
                         className="
                             w-full rounded-lg bg-violet-600 px-4 py-3 mt-2
                             flex justify-center items-center gap-2
@@ -123,10 +122,10 @@ function Login() {
                             focus:ring-violet-500 focus:ring-offset-2
                             active:bg-violet-800
                         "
-                        onClick={() => window.location.href = "http://localhost:8080/api/auth/discord/login"}
+                        href="/api/auth/discord/login"
                     >
                         <Gamepad2 height={24} /> Log in via Discord
-                    </button>
+                    </a>
 
                     {/* Register */}
                     <p className="mt-6 text-center text-sm text-gray-500">

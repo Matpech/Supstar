@@ -2,13 +2,21 @@ import { useNavigate } from "react-router-dom"
 import { useContext } from "react"
 import { AuthContext } from "../contexts/AuthContext"
 
-const BASE_URL = "http://localhost:8080/api"
+const BASE_URL = "/api"
 
 export function useApiClient() {
     const authContext = useContext(AuthContext)
     const navigate = useNavigate()
 
+    if (!authContext) {
+        throw new Error("useApiClient must be used inside AuthProvider")
+    }
+
     async function tryJwtRefresh() {
+        if (!authContext) {
+            throw new Error("useApiClient must be used inside AuthProvider")
+        }
+
         try {
             const response = await fetch(`${BASE_URL}/auth/refresh`, {
                 method: "POST",
@@ -37,8 +45,12 @@ export function useApiClient() {
     }
 
     async function request(endpoint: string, options: RequestInit = {}) {
+        if (!authContext) {
+            throw new Error("useApiClient must be used inside AuthProvider")
+        }
+
         const url = `${BASE_URL}${endpoint}`
-        const headers = {...options.headers}
+        const headers: any = {...options.headers}
 
         if (options.body && !(options.body instanceof FormData)) {
             headers["Content-Type"] = "application/json"

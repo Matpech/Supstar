@@ -29,6 +29,12 @@ services:
     depends_on:
       - api
 
+  frontend:
+    build: ./Frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+
 volumes:
   db_data:
   media:

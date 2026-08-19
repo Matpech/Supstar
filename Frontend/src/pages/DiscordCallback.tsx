@@ -9,7 +9,7 @@ function DiscordCallback() {
     const navigate = useNavigate()
     const auth = useAuth()
     const { request } = useApiClient()
-    const [error, setError] = useState(null)
+    const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -51,8 +51,10 @@ function DiscordCallback() {
 
                 // Redirect to Homepage if authentication is successful
                 navigate("/", { replace: true })
-            } catch (err) {
-                setError(err.message)
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    setError(err.message as string)
+                }
                 setLoading(false)
             }
         };
