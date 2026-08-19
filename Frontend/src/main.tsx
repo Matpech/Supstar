@@ -11,6 +11,7 @@ import DiscordCallback from './pages/DiscordCallback'
 import UnauthenticatedRoute from './components/routing/UnauthenticatedRoute'
 import AuthenticatedRoute from './components/routing/AuthenticatedRoute'
 import AppLayout from './components/layout/AppLayout'
+import AccountSettings from './pages/AccountSettings'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -30,6 +31,8 @@ createRoot(document.getElementById('root')!).render(
                     <Route element={<AuthenticatedRoute />}>
                         <Route element={<AppLayout />}>
                             <Route path='/' element={<Homepage />} />
+                            
+                            <Route path='/settings' element={<AccountSettings />} />
                         </Route>
                     </Route>
                 </Routes>
