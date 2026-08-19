@@ -8,20 +8,31 @@ import Login from './pages/Login'
 import { Toaster } from 'react-hot-toast'
 import Register from './pages/Register'
 import DiscordCallback from './pages/DiscordCallback'
+import UnauthenticatedRoute from './components/routing/UnauthenticatedRoute'
+import AuthenticatedRoute from './components/routing/AuthenticatedRoute'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path='/login' element={<Login />} />
-          <Route path='/register' element={<Register />} />
-          <Route path='/discord-callback' element={<DiscordCallback />} />
-          <Route path='/' element={<Homepage />} />
-        </Routes>
-      </BrowserRouter>
+    <StrictMode>
+        <AuthProvider>
+            <BrowserRouter>
+                {/* Authentication routes - only accessible if not already authenticated */}
+                <Routes>
+                    <Route element={<UnauthenticatedRoute />}>
+                        <Route path='/login' element={<Login />} />
+                        <Route path='/register' element={<Register />} />
+                        <Route path='/discord-callback' element={<DiscordCallback />} />
+                    </Route>
+                </Routes>
 
-      <Toaster position='bottom-right' />
-    </AuthProvider>
-  </StrictMode>,
+                {/* Application routes - only accessible to authenticated users */}
+                <Routes>
+                    <Route element={<AuthenticatedRoute />}>
+                        <Route path='/' element={<Homepage />} />
+                    </Route>
+                </Routes>
+            </BrowserRouter>
+
+            <Toaster position='bottom-right' />
+        </AuthProvider>
+    </StrictMode>,
 )
