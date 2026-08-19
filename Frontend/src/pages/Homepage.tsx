@@ -41,9 +41,7 @@ function Homepage() {
                 }
             }
 
-            // Artificial delay to check skeletons (remove in prod)
-            setTimeout(() => setLoading(false), 3000)
-            //setLoading(false)
+            setLoading(false)
         }
 
         fetchData()
@@ -61,7 +59,7 @@ function Homepage() {
             {!loading && stats && (<section className="grid grid-cols-2 gap-4 md:flex md:gap-8 md:justify-center">
                 <StatCard label="locations on your list" value={stats.personal_locations} />
                 <StatCard label="reviews published" value={stats.reviews_published} />
-                <StatCard label="average rating" value={stats.average_rating} />
+                <StatCard label="average rating" value={stats.average_rating || "N/A"} />
                 <StatCard label="shared lists owned" value={stats.lists_owned} />
             </section>)}
 
