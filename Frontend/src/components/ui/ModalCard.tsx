@@ -37,8 +37,8 @@ function ModalCard(props: Props) {
             <div
                 className="
                     border-2 rounded-4xl p-4 mx-auto
-                    w-64 md:min-w-xl md:max-w-2xl
-                    h-32 md:h-64
+                    md:min-w-xl md:max-w-2xl
+                    min-h-32 md:h-64
                     bg-white
                 "
                 onClick={(e) => e.stopPropagation()}
