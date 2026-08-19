@@ -10,6 +10,7 @@ import Register from './pages/Register'
 import DiscordCallback from './pages/DiscordCallback'
 import UnauthenticatedRoute from './components/routing/UnauthenticatedRoute'
 import AuthenticatedRoute from './components/routing/AuthenticatedRoute'
+import AppLayout from './components/layout/AppLayout'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -27,7 +28,9 @@ createRoot(document.getElementById('root')!).render(
                 {/* Application routes - only accessible to authenticated users */}
                 <Routes>
                     <Route element={<AuthenticatedRoute />}>
-                        <Route path='/' element={<Homepage />} />
+                        <Route element={<AppLayout />}>
+                            <Route path='/' element={<Homepage />} />
+                        </Route>
                     </Route>
                 </Routes>
             </BrowserRouter>

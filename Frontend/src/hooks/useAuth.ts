@@ -3,10 +3,12 @@ import { AuthContext } from "../contexts/AuthContext";
 import { useApiClient } from "./useApiClient";
 import { ApiError } from "../types/api";
 import { decodeBase64 } from "../utils/base64";
+import { useNavigate } from "react-router-dom";
 
 export function useAuth() {
     const context = useContext(AuthContext)
     const { request } = useApiClient()
+    const navigate = useNavigate()
 
     if (!context) {
         throw new Error("useAuth must be used inside AuthProvider")
@@ -93,6 +95,9 @@ export function useAuth() {
 
         // Delete credentials from the browser
         context.logout()
+
+        // Automatic redirect to /login
+        navigate("/login")
     }
 
     return {
