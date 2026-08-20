@@ -185,8 +185,7 @@ export const getOneSharedList = async (listId: number, userId: number) => {
  * 
  * @param userId The user ID requesting the list of Shared Lists
  * @returns An array of Shared Lists available to the user
- * @throws ApiException (404, NO_SL_AVAILABLE) or DatabaseException
- * (500, Internal server error)
+ * @throws DatabaseException (500 Internal server error)
  */
 export const getAvailableSharedLists = async (userId: number) => {
     try {
@@ -198,10 +197,6 @@ export const getAvailableSharedLists = async (userId: number) => {
                 WHERE user_id = $1
             `, [userId]
         )
-
-        if (result.rowCount === 0) {
-            throw new ApiException(404, "NO_SL_AVAILABLE", "You are not a member of any shared list")
-        }
 
         return result.rows
     } catch (error) {
