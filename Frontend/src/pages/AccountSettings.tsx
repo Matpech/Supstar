@@ -6,6 +6,7 @@ import ModalCard from "../components/ui/ModalCard"
 import { useApiClient } from "../hooks/useApiClient"
 import toast from "react-hot-toast"
 import { useAuth } from "../hooks/useAuth"
+import GenericButton from "../components/ui/GenericButton"
 
 function AccountSettings() {
     const { request } = useApiClient()
@@ -109,22 +110,14 @@ function AccountSettings() {
                             focus:border-black
                         "
                     />
-
-                    <button
+                    
+                    <GenericButton
+                        type="primary"
+                        action={handlePasswordUpdate}
                         disabled={!enablePwdUpdateBtn}
-                        onClick={handlePasswordUpdate}
-                        className="
-                            rounded-lg bg-green-600 px-4 py-3
-                            text-sm font-semibold text-white
-                            shadow-sm transition
-                            hover:bg-green-700
-                            focus:outline-none focus:ring-2
-                            focus:ring-green-500 focus:ring-offset-2
-                            active:bg-green-800
-                        "
                     >
                         Update password
-                    </button>
+                    </GenericButton>
                 </GenericCard>
 
                 <GenericCard>
@@ -133,20 +126,13 @@ function AccountSettings() {
                         <span className="font-bold">WARNING: </span>
                         This action will instantly delete your account and all associated data. This cannot be undone.
                     </p>
-                    <button
-                        onClick={() => setDeleteModalOpen(true)}
-                        className="
-                            rounded-lg bg-red-600 px-4 py-3 mt-4
-                            text-sm font-semibold text-white
-                            shadow-sm transition
-                            hover:bg-red-700
-                            focus:outline-none focus:ring-2
-                            focus:ring-red-500 focus:ring-offset-2
-                            active:bg-red-800
-                        "
+                    <GenericButton
+                        type="danger"
+                        action={() => setDeleteModalOpen(true)}
+                        classNameOverride="mt-4"
                     >
                         Delete account
-                    </button>
+                    </GenericButton>
 
                 </GenericCard>
 

@@ -7,11 +7,13 @@ import toast from "react-hot-toast"
 import SkeletonStatCards from "../components/skeletons/SkeletonStatCards"
 import SharedListBrowser from "../components/SharedListBrowser"
 import { useSharedLists } from "../hooks/useSharedLists"
-import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import SkeletonSLBrowser from "../components/skeletons/SkeletonSLBrowser"
+import GenericButton from "../components/ui/GenericButton"
 
 function Homepage() {
     const auth = useAuth()
+    const navigate = useNavigate()
     const { request } = useApiClient()
     const { getAvailableSharedLists } = useSharedLists()
 
@@ -67,20 +69,12 @@ function Homepage() {
             <section className="flex flex-col justify-center border-2 rounded-2xl w-full mt-12">
                 <div className="flex items-center justify-between p-4">
                     <h2 className="text-2xl md:text-4xl">List browser</h2>
-                    <Link
-                        to="/new-list"
-                        className="
-                            rounded-lg bg-green-600 px-4 py-3
-                            text-sm font-semibold text-white text-center
-                            shadow-sm transition
-                            hover:bg-green-700
-                            focus:outline-none focus:ring-2
-                            focus:ring-green-500 focus:ring-offset-2
-                            active:bg-green-800
-                        "
+                    <GenericButton
+                        type="primary"
+                        action={() => navigate("/new-list")}
                     >
                         New
-                    </Link>
+                    </GenericButton>
                 </div>
 
                 {loading && (<SkeletonSLBrowser />)}

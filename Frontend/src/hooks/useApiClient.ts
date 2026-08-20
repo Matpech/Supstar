@@ -65,12 +65,13 @@ export function useApiClient() {
             headers
         })
 
-        let json
+        let json = response.status !== 204
+            ? await response.json()
+            : undefined
 
         // Check for JWT related errors
         if (response.status === 401) {
-            json = await response.json()
-            if (json.code === "INVALID_TOKEN") {
+            if (json.error === "INVALID_TOKEN") {
                 const newJwt = await tryJwtRefresh()
                 if (newJwt) {
                     headers["Authorization"] = `Bearer ${newJwt}`
@@ -78,6 +79,7 @@ export function useApiClient() {
                         ...options,
                         headers
                     })
+                    json = await response.json()
                 } else {
                     return {
                         code: 401,
@@ -87,19 +89,9 @@ export function useApiClient() {
             }
         }
 
-        if (response.status !== 204) {
-            if (!json) {
-                json = await response.json()
-            }
-
-            return {
-                code: response.status,
-                json
-            }
-        } else {
-            return {
-                code: response.status
-            }
+        return {
+            code: response.status,
+            json
         }
     }
 
