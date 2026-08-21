@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+#map {
+    height: 100vh;
+    width: auto;
+}

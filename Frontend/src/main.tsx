@@ -12,6 +12,7 @@ import UnauthenticatedRoute from './components/routing/UnauthenticatedRoute'
 import AuthenticatedRoute from './components/routing/AuthenticatedRoute'
 import AppLayout from './components/layout/AppLayout'
 import AccountSettings from './pages/AccountSettings'
+import PersonalListViewer from './pages/PersonalListViewer'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -33,6 +34,8 @@ createRoot(document.getElementById('root')!).render(
                             <Route path='/' element={<Homepage />} />
                             
                             <Route path='/settings' element={<AccountSettings />} />
+
+                            <Route path='/user/:user_id/list' element={<PersonalListViewer />} />
                         </Route>
                     </Route>
                 </Routes>
