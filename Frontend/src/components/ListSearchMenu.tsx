@@ -1,9 +1,11 @@
 import { useState } from "react"
 import type { Location, SearchFilters, SortOptions } from "../types/location"
 import GenericButton from "./ui/GenericButton"
+import LocationCard from "./ui/LocationCard"
 
 interface Props {
     onUpdateQuery: (query: string, filters: SearchFilters, sort: SortOptions) => void
+    onLocationClicked: (location: Location) => void
     searchResults: Location[]
 }
 
@@ -16,7 +18,7 @@ function ListSearchMenu(props: Props) {
     const [filters, setFilters] = useState<SearchFilters>({})
 
     return (
-        <div>
+        <div className="flex flex-col gap-4">
             {/* Search section (searchbar, filters, sort) */}
             <section>
                 <input
@@ -63,10 +65,10 @@ function ListSearchMenu(props: Props) {
             </section>
 
             {/* Container for search results */}
-            <div>
-                 {props.searchResults.map(result => (
-                    <p>{result.name}</p>
-                 ))}
+            <div className="flex flex-col gap-1 overflow-y-auto">
+                {props.searchResults.map((result) => (
+                    <LocationCard data={result} onClick={() => props.onLocationClicked(result)} /> 
+                ))}
             </div>
 
             {/* Actions available */}

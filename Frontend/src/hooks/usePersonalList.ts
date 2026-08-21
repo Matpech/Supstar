@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useApiClient } from "./useApiClient";
 import toast from "react-hot-toast";
-import type { Location } from "../types/location";
+import type { Location, SearchFilters, SortOptions } from "../types/location";
 
 export function usePersonalList(userId: number) {
     const { request } = useApiClient()
@@ -9,7 +9,11 @@ export function usePersonalList(userId: number) {
     const [locations, setLocations] = useState<Location[]>([])
     const [loading, setLoading] = useState(false)
 
-    async function search() {
+    async function search(params?: {
+        query: string
+        filters: SearchFilters
+        sort: SortOptions
+    }) {
         setLoading(true)
         setLocations([])
 
@@ -24,12 +28,14 @@ export function usePersonalList(userId: number) {
         setLoading(false)
     }
 
+    // Initial search
     useEffect(() => {
         search()
     }, [])
 
     return {
         locations,
-        loading
+        loading,
+        search
     }
 }

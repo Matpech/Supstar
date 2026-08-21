@@ -21,9 +21,12 @@ function PersonalListViewer() {
     return (
         <div>
             <MapView locations={pl.locations} />
-            <ListPanel locations={pl.locations} onUpdateQuery={
-                (query, filters, sort) => pl.search({query, filters, sort})
-            } />
+            <ListPanel
+                locations={pl.locations}
+                onUpdateQuery={(query, filters, sort) => pl.search({query, filters, sort})}
+                // TODO: Focus on the location on the MapView
+                onLocationClicked={(location) => {console.log(`${location.name} clicked`)}} 
+            />
         </div>
     )
 }

@@ -4,6 +4,7 @@ import type { Location, SearchFilters, SortOptions } from "../types/location"
 
 interface Props {
     onUpdateQuery: (query: string, filters: SearchFilters, sort: SortOptions) => void,
+    onLocationClicked: (location: Location) => void
     locations: Location[]
 }
 
@@ -31,9 +32,11 @@ function ListPanel(props: Props) {
                 md:border-2 md:rounded-2xl bg-white
             "
         >
+            {/* TODO: Switch to the details menu when location is clicked */}
             {menu === 'search' ? (
                 <ListSearchMenu
                     onUpdateQuery={props.onUpdateQuery}
+                    onLocationClicked={props.onLocationClicked}
                     searchResults={props.locations}
                 />
             ) : (
