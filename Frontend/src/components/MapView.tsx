@@ -1,6 +1,11 @@
-import { MapContainer, TileLayer } from "react-leaflet"
+import { MapContainer, Marker, TileLayer } from "react-leaflet"
+import type { Location } from "../types/location"
 
-function MapView() {
+interface Props {
+    locations: Location[]
+}
+
+function MapView(props: Props) {
     return (
         <MapContainer
             className="w-full h-full absolute inset-0"
@@ -14,6 +19,12 @@ function MapView() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+
+            {props.locations.map(l => (
+                <Marker position={[l.latitude, l.longitude]}>
+
+                </Marker>
+            ))}
         </MapContainer>
     )
 }

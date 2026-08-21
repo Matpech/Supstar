@@ -440,10 +440,6 @@ export const getLocations = async (search: LocationSearchParams) => {
     try {
         const result = await pool.query(sqlQuery, values)
 
-        if (result.rowCount === 0) {
-            throw new NotFoundException("Locations")
-        }
-
         return result.rows
     } catch (error) {
         if (error instanceof ApiException) {

@@ -1,5 +1,5 @@
 import { UserRound, UsersRound } from "lucide-react"
-import type { SharedList } from "../types/api"
+import type { SharedList } from "../types/lists"
 import { useAuth } from "../hooks/useAuth"
 import { Link } from "react-router-dom"
 

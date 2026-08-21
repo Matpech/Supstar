@@ -1,4 +1,15 @@
-function ListPanel() {
+import { useState } from "react"
+import ListSearchMenu from "./ListSearchMenu"
+import type { Location, SearchFilters, SortOptions } from "../types/location"
+
+interface Props {
+    onUpdateQuery: (query: string, filters: SearchFilters, sort: SortOptions) => void,
+    locations: Location[]
+}
+
+function ListPanel(props: Props) {
+    const [menu, setMenu] = useState<'search' | 'details'>('search')
+
     return (
         <aside
             className="
@@ -20,24 +31,14 @@ function ListPanel() {
                 md:border-2 md:rounded-2xl bg-white
             "
         >
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
-            <p>Lorem ipsum</p>
+            {menu === 'search' ? (
+                <ListSearchMenu
+                    onUpdateQuery={props.onUpdateQuery}
+                    searchResults={props.locations}
+                />
+            ) : (
+                <></>
+            )}
         </aside>
     )
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import StatCard from "../components/ui/StatCard"
 import { useAuth } from "../hooks/useAuth"
 import { useApiClient } from "../hooks/useApiClient"
-import { ApiError, type SharedList, type UserStats } from "../types/api"
+import { ApiError } from "../types/api"
 import toast from "react-hot-toast"
 import SkeletonStatCards from "../components/skeletons/SkeletonStatCards"
 import SharedListBrowser from "../components/SharedListBrowser"
@@ -10,6 +10,8 @@ import { useSharedLists } from "../hooks/useSharedLists"
 import { useNavigate } from "react-router-dom"
 import SkeletonSLBrowser from "../components/skeletons/SkeletonSLBrowser"
 import GenericButton from "../components/ui/GenericButton"
+import type { UserStats } from "../types/user"
+import type { SharedList } from "../types/lists"
 
 function Homepage() {
     const auth = useAuth()
