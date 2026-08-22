@@ -10,6 +10,7 @@ function ListSearchMenu() {
         throw new Error("ListSearchMenu must be used inside ListProvider")
     }
 
+    // TODO: Make search functional
     const [query, setQuery] = useState("")
     const [sortBy, setSortBy] = useState<SortOptions>({
         sortBy: 'name',
@@ -71,7 +72,7 @@ function ListSearchMenu() {
                 ))}
             </div>
 
-            {/* Actions available */}
+            {/* TODO: Actions available */}
             <div>
 
             </div>
