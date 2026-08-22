@@ -496,7 +496,26 @@ export const getOneLocation = async (locationId: number, listId?: number, userId
                         SELECT ARRAY_AGG(g.id)
                         FROM gallery g
                         WHERE g.location_id = l.id
-                    ) AS images
+                    ) AS images,
+                    (
+                        SELECT COALESCE(
+                            JSON_AGG(
+                                JSON_BUILD_OBJECT(
+                                    'id', r.id,
+                                    'reviewer', JSON_BUILD_OBJECT(
+                                        'id', u.id,
+                                        'username', u.username
+                                    ),
+                                    'rating', r.rating,
+                                    'comment', r.comment
+                                )
+                            ),
+                            '[]'::json
+                            )
+                        FROM reviews r
+                        INNER JOIN users u ON u.id = r.reviewer_id
+                        WHERE r.location_id = l.id
+                    ) AS reviews
                 FROM locations l
                 WHERE l.id = $1
                 ${listId ? ' AND l.list_id = $2' : ''}

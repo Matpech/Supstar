@@ -15,7 +15,7 @@ function Navbar() {
                 border-2 rounded-2xl bg-white
             "
         >
-            <div className="flex items-center gap-2 hover:cursor-pointer" onClick={() => navigate("/")}>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
                 <MapPin size={40} />
                 <h1
                     className="text-2xl md:text-4xl font-bold"
@@ -31,7 +31,7 @@ function Navbar() {
 
                 <button
                     onClick={auth.logout}
-                    className="md:text-2xl hover:cursor-pointer"
+                    className="md:text-2xl cursor-pointer"
                 >
                     Log out
                 </button>

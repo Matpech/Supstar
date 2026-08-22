@@ -1,6 +1,7 @@
 import { useContext } from "react"
 import ListSearchMenu from "./ListSearchMenu"
 import { ListContext } from "../contexts/ListContext"
+import LocationDetails from "./LocationDetails"
 
 function ListPanel() {
     const listCtx = useContext(ListContext)
@@ -32,7 +33,7 @@ function ListPanel() {
             {listCtx.submenu === 'search' ? (
                 <ListSearchMenu />
             ) : (
-                <></>
+                <LocationDetails />
             )}
         </aside>
     )

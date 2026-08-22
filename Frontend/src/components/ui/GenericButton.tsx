@@ -19,7 +19,7 @@ function GenericButton(props: Props) {
                 rounded-lg text-sm font-semibold
                 shadow-sm transition duration-300
                 focus:outline-none focus:ring focus:ring-offset-1
-                hover:cursor-pointer disabled:hover:cursor-not-allowed
+                cursor-pointer disabled:cursor-not-allowed
 
                 ${props.type === "primary"
                     ? `

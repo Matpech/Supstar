@@ -245,4 +245,6 @@ export const countryCodes = {
   "YE": "Yemen",
   "ZM": "Zambia",
   "ZW": "Zimbabwe"
-}
+} as const
+
+export type CountryCode = keyof typeof countryCodes

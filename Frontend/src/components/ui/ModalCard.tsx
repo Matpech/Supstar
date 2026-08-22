@@ -45,7 +45,7 @@ function ModalCard(props: Props) {
             >
                 <div className="flex items-center justify-between mb-4">
                     <p className="text-xl font-bold">{props.title}</p>
-                    <button onClick={handleClose} className="hover:cursor-pointer">
+                    <button onClick={handleClose} className="cursor-pointer">
                         <CircleX />
                     </button>
                 </div>

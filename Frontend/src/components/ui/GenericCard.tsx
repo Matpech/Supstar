@@ -6,7 +6,7 @@ interface Props {
 
 function GenericCard({ children }: Props) {
     return (
-        <div className="border-2 rounded-4xl p-4">
+        <div className="border-2 rounded-2xl p-4">
             {children}
         </div>
     )

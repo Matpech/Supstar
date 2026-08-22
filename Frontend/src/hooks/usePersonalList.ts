@@ -42,9 +42,21 @@ export function usePersonalList(userId: number) {
         setLoading(false)
     }
 
+    async function fetchOne(locationId: number) {
+        const response = await request(`/users/${userId}/locations/${locationId}`)
+
+        if (response.code !== 200) {
+            toast.error(`Failed to fetch location ${response.json.error}`)
+            return
+        }
+
+        return response.json
+    }
+
     return {
         locations,
         loading,
-        search
+        search,
+        fetchOne
     }
 }

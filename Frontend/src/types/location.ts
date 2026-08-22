@@ -5,6 +5,16 @@ interface SingleDayOpeningTimes {
     close: string
 }
 
+export interface Review {
+    id: number
+    reviewer: {
+        id: number
+        username: string
+    }
+    rating: number
+    comment?: string
+}
+
 export interface Location {
     id: number
     user_id?: number
@@ -26,6 +36,8 @@ export interface Location {
     tags?: string[]
     status: LocationStatus
     average_rating?: number
+    images?: string[]
+    reviews?: Review[]
 
     full_address: string
     city: string
