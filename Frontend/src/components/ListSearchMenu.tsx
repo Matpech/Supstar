@@ -1,8 +1,12 @@
-import { useContext, useState } from "react"
+import { useContext, useEffect, useMemo, useState } from "react"
 import type { SearchFilters, SortOptions } from "../types/location"
 import GenericButton from "./ui/GenericButton"
 import { ListContext } from "../contexts/ListContext"
 import LocationCard from "./ui/LocationCard"
+import { useDebouncedValue } from "../hooks/useDebouncedValue"
+import { createPortal } from "react-dom"
+import ModalCard from "./ui/ModalCard"
+import SearchFiltersMenu from "./SearchFiltersMenu"
 
 function ListSearchMenu() {
     const listCtx = useContext(ListContext)
@@ -10,13 +14,45 @@ function ListSearchMenu() {
         throw new Error("ListSearchMenu must be used inside ListProvider")
     }
 
-    // TODO: Make search functional
     const [query, setQuery] = useState("")
-    const [sortBy, setSortBy] = useState<SortOptions>({
-        sortBy: 'name',
+    const [sort, setSort] = useState<SortOptions>({
+        sort_by: 'name',
         order: 'asc'
     })
     const [filters, setFilters] = useState<SearchFilters>({})
+    const [filtersModalOpen, setFiltersModalOpen] = useState(false)
+    const searchParams = useMemo(() => ({
+        query,
+        filters,
+        sort
+    }), [query, filters, sort])
+    const debouncedParams = useDebouncedValue(searchParams)
+
+    useEffect(() => {
+        listCtx.search(
+            debouncedParams.query,
+            debouncedParams.filters,
+            debouncedParams.sort
+        )
+    }, [debouncedParams])
+
+    function handleApplyFilters(filters: any) {
+        const processedFilters: SearchFilters = {}
+
+        if (filters.categories.length > 0) processedFilters.categories = filters.categories
+        if (filters.statuses.length > 0) processedFilters.statuses = filters.statuses
+        if (filters.city.trim() !== "") processedFilters.city = filters.city.trim()
+        if (filters.country !== "__") processedFilters.country = filters.country
+        if (filters.minimumScore > 0) processedFilters.minimumScore = filters.minimumScore
+        if (filters.prices) {
+            processedFilters.prices = {}
+
+            if (filters.prices.min) processedFilters.prices.min = filters.prices.min
+            if (filters.prices.max) processedFilters.prices.max = filters.prices.max
+        }
+
+        setFilters(processedFilters)
+    }
 
     return (
         <div className="flex flex-col gap-4">
@@ -39,6 +75,7 @@ function ListSearchMenu() {
 
                 <div className="flex mt-1">
                     <select
+                        onChange={(e) => setSort(JSON.parse(e.target.value))}
                         className="
                             w-full rounded-lg border border-gray-300
                             bg-white px-4 py-3 mr-2 text-sm text-gray-900
@@ -47,17 +84,17 @@ function ListSearchMenu() {
                             focus:border-black
                         "
                     >
-                        <option value={"{sortBy: 'name', order: 'asc'}"}>A-Z</option>
-                        <option value={"{sortBy: 'name', order: 'desc'}"}>Z-A</option>
-                        <option value={"{sortBy: 'price', order: 'asc'}"}>Price (cheap)</option>
-                        <option value={"{sortBy: 'pice', order: 'desc'}"}>Price (expensive)</option>
-                        <option value={"{sortBy: 'average_rating', order: 'asc'}"}>Rating (worst)</option>
-                        <option value={"{sortBy: 'average_rating', order: 'desc'}"}>Rating (best)</option>
+                        <option value={'{"sort_by": "name", "order": "asc"}'}>A-Z</option>
+                        <option value={'{"sort_by": "name", "order": "desc"}'}>Z-A</option>
+                        <option value={'{"sort_by": "price", "order": "asc"}'}>Price (cheap)</option>
+                        <option value={'{"sort_by": "price", "order": "desc"}'}>Price (expensive)</option>
+                        <option value={'{"sort_by": "average_rating", "order": "asc"}'}>Rating (worst)</option>
+                        <option value={'{"sort_by": "average_rating", "order": "desc"}'}>Rating (best)</option>
                     </select>
 
                     <GenericButton
                         type="neutral"
-                        action={() => {}}
+                        action={() => setFiltersModalOpen(true)}
                         classNameOverride="border"
                     >
                         Filters
@@ -76,6 +113,21 @@ function ListSearchMenu() {
             <div>
 
             </div>
+
+            {filtersModalOpen && createPortal(
+                <ModalCard title="Filters" onClose={() => setFiltersModalOpen(false)}>
+                    <SearchFiltersMenu
+                        filters={filters}
+                        open={filtersModalOpen}
+                        onApply={(filters) => {
+                            handleApplyFilters(filters)
+                            setFiltersModalOpen(false)
+                        }}
+                        onCancel={() => setFiltersModalOpen(false)}
+                    />
+                </ModalCard>,
+                document.body
+            )}
         </div>
     )
 }

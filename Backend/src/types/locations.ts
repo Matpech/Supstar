@@ -91,8 +91,8 @@ export interface LocationSearchParams {
     country?: string
     minimumScore?: number
     prices?: {
-        min: number
-        max: number
+        min?: number
+        max?: number
     }
     statuses?: LocationStatus[]
 

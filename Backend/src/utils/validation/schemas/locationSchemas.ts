@@ -88,8 +88,8 @@ export const locationSearchSchema = Joi.object({
     country: Joi.string().length(2).valid(...VALID_ISO3166_CODES),
     minimumScore: Joi.number().min(1).max(5),
     prices: Joi.object({
-        min: Joi.number().min(0).required(),
-        max: Joi.number().min(0).required()
+        min: Joi.number().min(0),
+        max: Joi.number().min(0)
     }),
     statuses: Joi.array().items(Joi.string().valid(...VALID_STATUSES)),
 

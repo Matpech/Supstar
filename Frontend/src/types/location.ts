@@ -35,7 +35,7 @@ export interface Location {
 }
 
 export interface SortOptions {
-    sortBy: 'name' | 'average_rating' | 'price'
+    sort_by: 'name' | 'average_rating' | 'price'
     order: 'asc' | 'desc'
 }
 
@@ -45,8 +45,8 @@ export interface SearchFilters {
     country?: string
     minimumScore?: number
     prices?: {
-        min: number
-        max: number
+        min?: number
+        max?: number
     }
     statuses?: LocationStatus[]
 }

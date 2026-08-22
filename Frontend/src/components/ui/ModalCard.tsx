@@ -27,7 +27,7 @@ function ModalCard(props: Props) {
         <div
             onClick={handleClose}
             className={`
-                fixed inset-0 z-50
+                fixed inset-0 z-1000
                 flex items-center justify-center
                 bg-black/50 backdrop-blur-sm
                 transition-opacity duration-200
@@ -38,7 +38,7 @@ function ModalCard(props: Props) {
                 className="
                     border-2 rounded-4xl p-4 mx-auto
                     md:min-w-xl md:max-w-2xl
-                    min-h-32 md:h-64
+                    min-h-32 md:min-h-64
                     bg-white
                 "
                 onClick={(e) => e.stopPropagation()}

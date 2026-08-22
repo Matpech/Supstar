@@ -407,8 +407,16 @@ export const getLocations = async (search: LocationSearchParams) => {
     }
 
     if (search.prices !== undefined) {
-        fields.push(`l.price BETWEEN $${index++} AND $${index++}`)
-        values.push(search.prices.min, search.prices.max)
+        if (search.prices.min && !search.prices.max) {
+            fields.push(`l.price > $${index++}`)
+            values.push(search.prices.min)
+        } else if (!search.prices.min && search.prices.max) {
+            fields.push(`l.price < $${index++}`)
+            values.push(search.prices.max)
+        } else if (search.prices.min && search.prices.max) {
+            fields.push(`l.price BETWEEN $${index++} AND $${index++}`)
+            values.push(search.prices.min, search.prices.max)
+        }
     }
 
     if (search.statuses !== undefined) {

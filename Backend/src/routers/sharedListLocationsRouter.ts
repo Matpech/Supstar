@@ -146,7 +146,7 @@ router.delete("/:location_id/gallery", requireLoggedIn, async (req, res) => {
     return res.sendStatus(204)
 })
 
-router.get("/", requireLoggedIn, async (req, res) => {
+router.post("/search", requireLoggedIn, async (req, res) => {
     if (!req.user) {
         throw new InvalidTokenException()
     }
