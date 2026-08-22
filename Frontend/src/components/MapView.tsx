@@ -1,11 +1,36 @@
-import { MapContainer, Marker, TileLayer } from "react-leaflet"
-import type { Location } from "../types/location"
+import { useContext, useEffect } from "react"
+import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet"
+import { ListContext } from "../contexts/ListContext"
 
-interface Props {
-    locations: Location[]
+function MapController() {
+    const map = useMap()
+    const listCtx = useContext(ListContext)
+    if (!listCtx) {
+        // Works for now with the list viewers, but might become
+        // problematic once we need to use a map to point at a new
+        // location in the creation process
+        throw new Error("MapView must be used inside ListProvider")
+    }
+
+    useEffect(() => {
+        if (!listCtx.focusAt) return
+
+        map.flyTo(listCtx.focusAt)
+        listCtx.resetFocusPoint()
+    }, [listCtx.focusAt])
+
+    return null
 }
 
-function MapView(props: Props) {
+function MapView() {
+    const listCtx = useContext(ListContext)
+    if (!listCtx) {
+        // Works for now with the list viewers, but might become
+        // problematic once we need to use a map to point at a new
+        // location in the creation process
+        throw new Error("MapView must be used inside ListProvider")
+    }
+
     return (
         <MapContainer
             className="w-full h-full absolute inset-0"
@@ -20,8 +45,10 @@ function MapView(props: Props) {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {props.locations.map(l => (
-                <Marker position={[l.latitude, l.longitude]}>
+            <MapController />
+
+            {listCtx.locations.map(l => (
+                <Marker key={l.id} position={[l.latitude, l.longitude]}>
 
                 </Marker>
             ))}

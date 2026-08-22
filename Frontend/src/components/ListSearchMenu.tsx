@@ -1,15 +1,15 @@
-import { useState } from "react"
-import type { Location, SearchFilters, SortOptions } from "../types/location"
+import { useContext, useState } from "react"
+import type { SearchFilters, SortOptions } from "../types/location"
 import GenericButton from "./ui/GenericButton"
+import { ListContext } from "../contexts/ListContext"
 import LocationCard from "./ui/LocationCard"
 
-interface Props {
-    onUpdateQuery: (query: string, filters: SearchFilters, sort: SortOptions) => void
-    onLocationClicked: (location: Location) => void
-    searchResults: Location[]
-}
+function ListSearchMenu() {
+    const listCtx = useContext(ListContext)
+    if (!listCtx) {
+        throw new Error("ListSearchMenu must be used inside ListProvider")
+    }
 
-function ListSearchMenu(props: Props) {
     const [query, setQuery] = useState("")
     const [sortBy, setSortBy] = useState<SortOptions>({
         sortBy: 'name',
@@ -66,8 +66,8 @@ function ListSearchMenu(props: Props) {
 
             {/* Container for search results */}
             <div className="flex flex-col gap-1 overflow-y-auto">
-                {props.searchResults.map((result) => (
-                    <LocationCard data={result} onClick={() => props.onLocationClicked(result)} /> 
+                {listCtx.locations.map((result) => (
+                    <LocationCard key={result.id} data={result} onClick={() => listCtx.openLocation(result)} /> 
                 ))}
             </div>
 

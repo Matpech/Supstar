@@ -25,6 +25,7 @@ export interface Location {
     },
     tags?: string[]
     status: LocationStatus
+    average_rating?: number
 
     full_address: string
     city: string

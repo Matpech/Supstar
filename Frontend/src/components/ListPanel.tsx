@@ -1,15 +1,12 @@
-import { useState } from "react"
+import { useContext } from "react"
 import ListSearchMenu from "./ListSearchMenu"
-import type { Location, SearchFilters, SortOptions } from "../types/location"
+import { ListContext } from "../contexts/ListContext"
 
-interface Props {
-    onUpdateQuery: (query: string, filters: SearchFilters, sort: SortOptions) => void,
-    onLocationClicked: (location: Location) => void
-    locations: Location[]
-}
-
-function ListPanel(props: Props) {
-    const [menu, setMenu] = useState<'search' | 'details'>('search')
+function ListPanel() {
+    const listCtx = useContext(ListContext)
+    if (!listCtx) {
+        throw new Error("ListPanel must be used inside ListProvider")
+    }
 
     return (
         <aside
@@ -32,13 +29,8 @@ function ListPanel(props: Props) {
                 md:border-2 md:rounded-2xl bg-white
             "
         >
-            {/* TODO: Switch to the details menu when location is clicked */}
-            {menu === 'search' ? (
-                <ListSearchMenu
-                    onUpdateQuery={props.onUpdateQuery}
-                    onLocationClicked={props.onLocationClicked}
-                    searchResults={props.locations}
-                />
+            {listCtx.submenu === 'search' ? (
+                <ListSearchMenu />
             ) : (
                 <></>
             )}
