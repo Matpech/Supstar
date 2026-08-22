@@ -3,14 +3,16 @@ import GenericButton from "./ui/GenericButton"
 import { ListContext } from "../contexts/ListContext"
 import { useParams } from "react-router-dom"
 import { usePersonalList } from "../hooks/usePersonalList"
-import { Banknote, Clock, Map, Pin, PinOff, Star, StarCheck, StarX, Tag } from "lucide-react"
+import { Banknote, Clock, ImageOff, Map, Pin, PinOff, Star, StarCheck, StarX, Tag } from "lucide-react"
 import type { Location } from "../types/location"
 import { countryCodes, type CountryCode } from "../utils/iso3166"
 import GenericCard from "./ui/GenericCard"
+import { createPortal } from "react-dom"
 
 function LocationDetails() {
     const [tab, setTab] = useState<'details' | 'reviews' | 'photos'>('details')
     const [details, setDetails] = useState<Location | null>(null)
+    const [openedImage, setOpenedImage] = useState<string | null>(null)
 
     const listCtx = useContext(ListContext)
     if (!listCtx) {
@@ -43,6 +45,10 @@ function LocationDetails() {
     }, [])
 
     if (!details) return
+
+    function handleImageClick(imageId: string) {
+        setOpenedImage(imageId)
+    }
 
     return (
         <div className="flex flex-col gap-4">
@@ -199,8 +205,48 @@ function LocationDetails() {
                 {/* Tab 3: photos */}
                 {tab === 'photos' && (
                 <div>
-                
+                    {details.images && details.images.length > 0 ? (
+                        <div className="grid grid-cols-2">
+                            {details.images.map(img => (
+                                <div key={img} className="aspect-square overflow-hidden m-1 shadow-md">
+                                    <img
+                                        onClick={() => setOpenedImage(img)}
+                                        src={`/media/photos/${img}.webp`}
+                                        className="h-full w-full object-cover"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex gap-2 items-center">
+                            <ImageOff size={64} color="var(--color-green-600)" />
+                            <div>
+                                <p className="text-xl font-bold">No photos found</p>
+                                <p className="italic text-gray-500">There are no photos of this location</p>
+                            </div>
+                        </div>
+                    )}
                 </div>)}
+
+                {/* Photo view */}
+                {openedImage && createPortal(
+                    <div
+                        onClick={() => setOpenedImage(null)}
+                        className={`
+                            fixed inset-0 z-1000
+                            flex items-center justify-center
+                            bg-black/50 backdrop-blur-sm
+                        `}
+                    >
+                        <div className="m-auto">
+                            <img
+                                src={`/media/photos/${openedImage}.webp`}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        </div>
+                    </div>,
+                    document.body
+                )}
             </div>
         </div>
     )
