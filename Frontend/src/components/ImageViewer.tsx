@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, MoveLeft, MoveRight } from "lucide-react"
+import { MoveLeft, MoveRight } from "lucide-react"
 
 interface Props {
     allImages?: string[]
@@ -33,7 +33,7 @@ function ImageViewer({ allImages, image, setImage }: Props) {
     return (
         <div className="m-auto flex-col gap-2">
             <div className="flex gap-2 justify-center items-center">
-                <MoveLeft className="hidden md:block rounded-[128px] bg-gray-100" size={128} color="var(--color-green-600)" onClick={(e) => {
+                <MoveLeft className="hidden md:block rounded-[128px] border-4 border-green-600 p-2 bg-gray-100" size={128} color="var(--color-green-600)" onClick={(e) => {
                     e.stopPropagation()
                     cycleImage(-1)
                 }} />
@@ -43,7 +43,7 @@ function ImageViewer({ allImages, image, setImage }: Props) {
                     onClick={(e) => e.stopPropagation()}
                 />
 
-                <MoveRight className="hidden md:block rounded-[128px] bg-gray-100" size={128} color="var(--color-green-600)" onClick={(e) => {
+                <MoveRight className="hidden md:block rounded-[128px] border-4 border-green-600 p-2 bg-gray-100" size={128} color="var(--color-green-600)" onClick={(e) => {
                     e.stopPropagation()
                     cycleImage(1)
                 }} />
