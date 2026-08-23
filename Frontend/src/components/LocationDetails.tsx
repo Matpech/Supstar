@@ -8,6 +8,7 @@ import type { Location } from "../types/location"
 import { countryCodes, type CountryCode } from "../utils/iso3166"
 import GenericCard from "./ui/GenericCard"
 import { createPortal } from "react-dom"
+import ImageViewer from "./ImageViewer"
 
 function LocationDetails() {
     const [tab, setTab] = useState<'details' | 'reviews' | 'photos'>('details')
@@ -45,10 +46,6 @@ function LocationDetails() {
     }, [])
 
     if (!details) return
-
-    function handleImageClick(imageId: string) {
-        setOpenedImage(imageId)
-    }
 
     return (
         <div className="flex flex-col gap-4">
@@ -172,6 +169,7 @@ function LocationDetails() {
                 </div>)}
 
                 {/* Tab 2: reviews */}
+                {/* TODO: Add button to publish a review at the bottom */}
                 {tab === 'reviews' && (
                 <div>
                     {details.reviews && details.reviews.length > 0 ? (
@@ -238,12 +236,7 @@ function LocationDetails() {
                             bg-black/50 backdrop-blur-sm
                         `}
                     >
-                        <div className="m-auto">
-                            <img
-                                src={`/media/photos/${openedImage}.webp`}
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        </div>
+                        <ImageViewer allImages={details.images} image={openedImage} setImage={(newImage: string) => setOpenedImage(newImage)} />
                     </div>,
                     document.body
                 )}
