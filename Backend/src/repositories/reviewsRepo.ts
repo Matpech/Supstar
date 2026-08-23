@@ -13,8 +13,24 @@ import { pool } from "../utils/db";
 export const publishReview = async (data: ReviewCreateParams) => {
     try {
         const result = await pool.query(
-            "INSERT INTO reviews (location_id, reviewer_id, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *",
-            [data.location_id, data.reviewer_id, data.rating, data.comment]
+            `
+                WITH inserted AS (
+                    INSERT INTO reviews
+                        (location_id, reviewer_id, rating, comment)
+                    VALUES ($1, $2, $3, $4)
+                    RETURNING id, reviewer_id, rating, comment
+                )
+                SELECT
+                    i.id,
+                    json_build_object(
+                        'id', u.id,
+                        'username', u.username
+                    ) AS reviewer,
+                    i.rating,
+                    i.comment
+                FROM inserted i
+                INNER JOIN users u ON u.id = i.reviewer_id
+            `, [data.location_id, data.reviewer_id, data.rating, data.comment]
         )
 
         return result.rows[0]

@@ -6,7 +6,6 @@ interface Props {
     setImage: Function
 }
 
-// TODO: Potential improvement : add arrow buttons to cycle between images in order
 function ImageViewer({ allImages, image, setImage }: Props) {
     function cycleImage(indexChange: number) {
         if (!allImages) return

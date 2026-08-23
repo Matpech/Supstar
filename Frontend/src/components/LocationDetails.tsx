@@ -9,12 +9,18 @@ import { countryCodes, type CountryCode } from "../utils/iso3166"
 import GenericCard from "./ui/GenericCard"
 import { createPortal } from "react-dom"
 import ImageViewer from "./ImageViewer"
+import ModalCard from "./ui/ModalCard"
+import ReviewEditor from "./ReviewEditor"
+import { useApiClient } from "../hooks/useApiClient"
+import toast from "react-hot-toast"
 
 function LocationDetails() {
     const [tab, setTab] = useState<'details' | 'reviews' | 'photos'>('details')
     const [details, setDetails] = useState<Location | null>(null)
     const [openedImage, setOpenedImage] = useState<string | null>(null)
+    const [reviewCreateModalOpen, setReviewCreateModalOpen] = useState(false)
 
+    const { request } = useApiClient()
     const listCtx = useContext(ListContext)
     if (!listCtx) {
         throw new Error("LocationDetails must be used inside ListProvider")
@@ -46,6 +52,44 @@ function LocationDetails() {
     }, [])
 
     if (!details) return
+
+    // Send the review to the backend and display it on the page
+    async function handleReviewSubmission(rating: number, comment: string) {
+        if (!listCtx || !listCtx.selectedLocation) return
+
+        const payload: {
+            rating: number
+            comment?: string
+        } = { rating, comment: undefined }
+
+        if (comment.trim().length > 0) {
+            payload.comment = comment
+        }
+
+        const response = await request(`/users/${userId}/locations/${listCtx.selectedLocation.id}/reviews`, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+
+        if (response.code !== 201) {
+            toast.error(`Failed to submit your review (${response.json.error})`)
+            return
+        }
+
+        toast.success("Review submitted")
+        setDetails((prev) => {
+            if (!prev) return null
+
+            const newArray = prev?.reviews
+                ? [...prev.reviews, response.json]
+                : [response.json]
+
+            return {
+                ...prev,
+                reviews: newArray
+            }
+        })
+    }
 
     return (
         <div className="flex flex-col gap-4">
@@ -169,35 +213,56 @@ function LocationDetails() {
                 </div>)}
 
                 {/* Tab 2: reviews */}
-                {/* TODO: Add button to publish a review at the bottom */}
                 {tab === 'reviews' && (
                 <div>
-                    {details.reviews && details.reviews.length > 0 ? (
-                        <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
+                        {details.reviews && details.reviews.length > 0 ? (
+                            <>
+                                <div className="flex gap-2 items-center">
+                                    <StarCheck size={64} color="var(--color-green-600)" />
+                                    <div>
+                                        <p className="text-xl font-bold">Average rating: {details.average_rating}/5</p>
+                                        <p className="italic text-gray-500">{details.reviews.length} review(s) published</p>
+                                    </div>
+                                </div>
+
+                                {details.reviews.map(review => (
+                                    <GenericCard key={review.id}>
+                                        <p>{review.reviewer.username} - {review.rating}/5</p>
+                                        {review.comment && (<p className="text-gray-500 italic">{review.comment}</p>)}
+                                    </GenericCard>
+                                ))}
+                            </>
+                        ) : (
                             <div className="flex gap-2 items-center">
-                                <StarCheck size={64} color="var(--color-green-600)" />
+                                <StarX size={64} color="var(--color-green-600)" />
                                 <div>
-                                    <p className="text-xl font-bold">Average rating: {details.average_rating}/5</p>
-                                    <p className="italic text-gray-500">{details.reviews.length} review(s) published</p>
+                                    <p className="text-xl font-bold">No reviews</p>
+                                    <p className="italic text-gray-500">This location has no reviews. Share your opinion.</p>
                                 </div>
                             </div>
+                        )}
 
-                            {details.reviews.map(review => (
-                                <GenericCard>
-                                    <p>{review.reviewer.username} - {review.rating}/5</p>
-                                    {review.comment && (<p className="text-gray-500 italic">{review.comment}</p>)}
-                                </GenericCard>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex gap-2 items-center">
-                            <StarX size={64} color="var(--color-green-600)" />
-                            <div>
-                                <p className="text-xl font-bold">No reviews</p>
-                                <p className="italic text-gray-500">This location has no reviews. Share your opinion.</p>
-                            </div>
-                        </div>
-                    )}
+                        <GenericButton
+                            type="primary"
+                            action={() => setReviewCreateModalOpen(true)}
+                            classNameOverride="w-full"
+                        >
+                            Write a review
+                        </GenericButton>
+
+                        {reviewCreateModalOpen && createPortal(
+                            <ModalCard title="Write a review" onClose={() => setReviewCreateModalOpen(false)}>
+                                <ReviewEditor
+                                    onSubmit={(_id: number, rating: number, comment: string) => {
+                                        setReviewCreateModalOpen(false)
+                                        handleReviewSubmission(rating, comment)
+                                    }}
+                                />
+                            </ModalCard>,
+                            document.body
+                        )}
+                    </div>
                 </div>)}
 
                 {/* Tab 3: photos */}
