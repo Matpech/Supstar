@@ -1,4 +1,5 @@
 import { MoveLeft, MoveRight } from "lucide-react"
+import { useEffect } from "react"
 
 interface Props {
     allImages?: string[]
@@ -11,7 +12,6 @@ function ImageViewer({ allImages, image, setImage }: Props) {
         if (!allImages) return
 
         let idx = allImages.findIndex((value, _index, _obj) => value === image)
-        console.log(`Current image: ${idx}`)
 
         // Image ID not found in array (should never happen)
         if (idx === -1) return
@@ -28,6 +28,31 @@ function ImageViewer({ allImages, image, setImage }: Props) {
         console.log(`New image: ${idx}`)
         setImage(allImages[idx])
     }
+
+    useEffect(() => {
+        function keyEventHandler(e: KeyboardEvent) {
+            switch (e.key) {
+                case "ArrowLeft":
+                    e.preventDefault()
+                    cycleImage(-1)
+                    break
+
+                case "ArrowRight":
+                    e.preventDefault()
+                    cycleImage(1)
+                    break
+            
+                default:
+                    break
+            }
+        }
+
+        window.addEventListener("keydown", keyEventHandler)
+
+        return () => {
+            window.removeEventListener("keydown", keyEventHandler)
+        }
+    }, [image])
 
     return (
         <div className="m-auto flex-col gap-2">
