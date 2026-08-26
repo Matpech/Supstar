@@ -7,6 +7,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue"
 import { createPortal } from "react-dom"
 import ModalCard from "./ui/ModalCard"
 import SearchFiltersMenu from "./SearchFiltersMenu"
+import LocationEditor from "./LocationEditor"
 
 function ListSearchMenu() {
     const listCtx = useContext(ListContext)
@@ -21,6 +22,7 @@ function ListSearchMenu() {
     })
     const [filters, setFilters] = useState<SearchFilters>({})
     const [filtersModalOpen, setFiltersModalOpen] = useState(false)
+    const [locationCreateModalOpen, setLocationCreateModalOpen] = useState(false)
     const searchParams = useMemo(() => ({
         query,
         filters,
@@ -111,7 +113,12 @@ function ListSearchMenu() {
 
             {/* TODO: Actions available */}
             <div>
-
+                <GenericButton
+                    type="primary"
+                    action={() => setLocationCreateModalOpen(true)}
+                >
+                    New location
+                </GenericButton>
             </div>
 
             {filtersModalOpen && createPortal(
@@ -125,6 +132,13 @@ function ListSearchMenu() {
                         }}
                         onCancel={() => setFiltersModalOpen(false)}
                     />
+                </ModalCard>,
+                document.body
+            )}
+
+            {locationCreateModalOpen && createPortal(
+                <ModalCard title="New location" onClose={() => setLocationCreateModalOpen(false)}>
+                    <LocationEditor />
                 </ModalCard>,
                 document.body
             )}
