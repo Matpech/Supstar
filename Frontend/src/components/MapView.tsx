@@ -1,7 +1,8 @@
 import { useContext, useEffect } from "react"
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet"
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet"
 import { ListContext } from "../contexts/ListContext"
 import toast from "react-hot-toast"
+import LocationPreview from "./LocationPreview"
 
 const WARN_ACCURACY = 2_500
 const NOFLY_ACCURACY = 10_000
@@ -71,7 +72,9 @@ function MapView() {
 
             {listCtx.locations.map(l => (
                 <Marker key={l.id} position={[l.latitude, l.longitude]}>
-
+                    <Popup>
+                        <LocationPreview location={l} onClick={() => listCtx.openLocation(l)} />
+                    </Popup>
                 </Marker>
             ))}
         </MapContainer>

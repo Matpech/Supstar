@@ -49,7 +49,7 @@ function LocationDetails() {
         }
 
         fetchLocation()
-    }, [])
+    }, [listCtx.selectedLocation])
 
     if (!details) return
 
