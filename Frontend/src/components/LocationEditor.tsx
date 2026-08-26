@@ -2,6 +2,8 @@ import { useState } from "react"
 import GenericButton from "./ui/GenericButton"
 import type { LocationCategory, LocationStatus } from "../types/location";
 import { type CountryCode, countryCodes } from "../utils/iso3166";
+import MapSelector from "./MapSelector";
+import type { LatLngExpression } from "leaflet";
 
 type Day = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
 type OpeningTimesSingleDay = {
@@ -38,6 +40,7 @@ function LocationEditor() {
     const [address, setAddress] = useState("")
     const [city, setCity] = useState("")
     const [country, setCountry] = useState<CountryCode | undefined>(undefined)
+    const [coordinates, setCoordinates] = useState<LatLngExpression | undefined>(undefined)
 
     const [enabledDays, setEnabledDays] = useState<EnabledDays>({
         monday: false,
@@ -283,9 +286,15 @@ function LocationEditor() {
                     </div>
                 </div>
 
+                <div>
+                    <p className="text-md font-bold">Coordinates</p>
+                    <p className="mb-2 italic text-gray-500">Please put the location on the map below</p>
+                    <MapSelector onUpdate={(lat, lon) => setCoordinates([lat, lon])} />
+                </div>
+
                 <p className="text-xl font-bold">Opening times <span className="font-medium">(optional)</span></p>
 
-                <div className="grid grid-cols-7 gap-0.5">
+                <div className="grid grid-cols-4 md:grid-cols-7 gap-0.5">
                     {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map((day) => (
                         <div key={day}>
                             <input
