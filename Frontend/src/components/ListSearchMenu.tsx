@@ -11,11 +11,13 @@ import LocationEditor from "./LocationEditor"
 import toast from "react-hot-toast"
 import { useParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
+import { useApiClient } from "../hooks/useApiClient"
 
 function ListSearchMenu() {
     const params = useParams()
     const listCtx = useContext(ListContext)
     const { ctx } = useAuth()
+    const { rawFetch } = useApiClient()
     if (!listCtx) {
         throw new Error("ListSearchMenu must be used inside ListProvider")
     }
@@ -112,6 +114,17 @@ function ListSearchMenu() {
         }
     }
 
+    async function handleExport() {
+        const response = await rawFetch(`/self/pl-export`)
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `pl-export.json`
+        a.click()
+        URL.revokeObjectURL(url)
+    }
+
     return (
         <div className="flex flex-col gap-4">
             {/* Search section (searchbar, filters, sort) */}
@@ -175,13 +188,21 @@ function ListSearchMenu() {
             </div>
 
             {/* TODO: Actions available */}
-            <div>
+            <div className="flex gap-1">
                 <GenericButton
-                    classNameOverride={canManageLocations ? undefined : "hidden"}
+                    classNameOverride={canManageLocations ? "w-full" : "hidden"}
                     type="primary"
                     action={() => setLocationCreateModalOpen(true)}
                 >
                     New location
+                </GenericButton>
+
+                <GenericButton
+                    classNameOverride={canManageLocations ? undefined : "hidden"}
+                    type="neutral"
+                    action={handleExport}
+                >
+                    Export
                 </GenericButton>
             </div>
 

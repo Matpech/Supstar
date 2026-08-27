@@ -95,5 +95,29 @@ export function useApiClient() {
         }
     }
 
-    return { request }
+    async function rawFetch(endpoint: string, options: RequestInit = {}) {
+        if (!authContext) {
+            throw new Error("useApiClient must be used inside AuthProvider")
+        }
+
+        const url = `${BASE_URL}${endpoint}`
+        const headers: any = {...options.headers}
+
+        if (options.body && !(options.body instanceof FormData)) {
+            headers["Content-Type"] = "application/json"
+        }
+
+        if (authContext.jwt) {
+            headers["Authorization"] = `Bearer ${authContext.jwt}`
+        }
+
+        let response = await fetch(url, {
+            ...options,
+            headers
+        })
+
+        return response
+    }
+
+    return { request, rawFetch }
 }
