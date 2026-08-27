@@ -3,7 +3,7 @@ import GenericButton from "./ui/GenericButton"
 import { ListContext } from "../contexts/ListContext"
 import { useParams } from "react-router-dom"
 import { usePersonalList } from "../hooks/usePersonalList"
-import { Banknote, Clock, ImageOff, Map, Pin, PinOff, Star, StarCheck, StarX, Tag } from "lucide-react"
+import { Banknote, Clock, ImageOff, Map, Pencil, Pin, PinOff, Star, StarCheck, StarX, Tag, Trash2 } from "lucide-react"
 import type { Location } from "../types/location"
 import { countryCodes, type CountryCode } from "../utils/iso3166"
 import GenericCard from "./ui/GenericCard"
@@ -13,14 +13,19 @@ import ModalCard from "./ui/ModalCard"
 import ReviewEditor from "./ReviewEditor"
 import { useApiClient } from "../hooks/useApiClient"
 import toast from "react-hot-toast"
+import { useAuth } from "../hooks/useAuth"
+import ConfirmationPrompt from "./ui/ConfirmationPrompt"
 
 function LocationDetails() {
     const [tab, setTab] = useState<'details' | 'reviews' | 'photos'>('details')
     const [details, setDetails] = useState<Location | null>(null)
     const [openedImage, setOpenedImage] = useState<string | null>(null)
     const [reviewCreateModalOpen, setReviewCreateModalOpen] = useState(false)
+    const [reviewEditModalId, setReviewEditModalId] = useState(-1)
+    const [reviewDeleteModalId, setReviewDeleteModalId] = useState(-1)
 
     const { request } = useApiClient()
+    const { ctx } = useAuth()
     const listCtx = useContext(ListContext)
     if (!listCtx) {
         throw new Error("LocationDetails must be used inside ListProvider")
@@ -83,6 +88,58 @@ function LocationDetails() {
             const newArray = prev?.reviews
                 ? [...prev.reviews, response.json]
                 : [response.json]
+
+            return {
+                ...prev,
+                reviews: newArray
+            }
+        })
+    }
+
+    async function handleReviewEdition(id: number, rating: number, comment: string) {
+        if (!listCtx || !listCtx.selectedLocation) return
+
+        const payload: {
+            rating: number
+            comment?: string
+        } = { rating, comment: undefined }
+
+        if (comment.trim().length > 0) {
+            payload.comment = comment
+        }
+
+        const response = await request(`/users/${userId}/locations/${listCtx.selectedLocation.id}/reviews/${id}`, {
+            method: "PATCH",
+            body: JSON.stringify(payload)
+        })
+
+        if (response.code !== 200) {
+            toast.error(`Failed to edit review (${response.json.error})`)
+            return
+        }
+
+        toast.success("Review updated")
+    }
+
+    async function handleReviewDelete(id: number) {
+        if (!listCtx || !listCtx.selectedLocation) return
+
+        const response = await request(`/users/${userId}/locations/${listCtx.selectedLocation.id}/reviews/${id}`, {
+            method: "DELETE"
+        })
+
+        if (response.code !== 204) {
+            toast.error(`Failed to delete review (${response.json.error})`)
+            return
+        }
+
+        toast.success("Review deleted")
+        setDetails((prev) => {
+            if (!prev) return null
+
+            const newArray = prev?.reviews
+                ? [...prev.reviews].filter((r) => r.id !== id)
+                : []
 
             return {
                 ...prev,
@@ -228,8 +285,35 @@ function LocationDetails() {
 
                                 {details.reviews.map(review => (
                                     <GenericCard key={review.id}>
-                                        <p>{review.reviewer.username} - {review.rating}/5</p>
-                                        {review.comment && (<p className="text-gray-500 italic">{review.comment}</p>)}
+                                        <div className="relative">
+                                            {review.reviewer.id === ctx.user?.id && (
+                                                <div className="absolute top-2 right-2 flex gap-1 justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setReviewEditModalId(review.id)
+                                                        }}
+                                                        className="p-1.5 rounded-md text-orange-600 hover:bg-orange-100 transition-colors"
+                                                    >
+                                                        <Pencil size={18} />
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setReviewDeleteModalId(review.id)
+                                                        }}
+                                                        className="p-1.5 rounded-md text-red-600 hover:bg-red-100 transition-colors"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <p>{review.reviewer.username} - {review.rating}/5</p>
+                                            {review.comment && (<p className="text-gray-500 italic">{review.comment}</p>)}
+                                        </div>
                                     </GenericCard>
                                 ))}
                             </>
@@ -258,6 +342,35 @@ function LocationDetails() {
                                         setReviewCreateModalOpen(false)
                                         handleReviewSubmission(rating, comment)
                                     }}
+                                />
+                            </ModalCard>,
+                            document.body
+                        )}
+
+                        {reviewEditModalId !== -1 && createPortal(
+                            <ModalCard title="Edit review" onClose={() => setReviewEditModalId(-1)}>
+                                <ReviewEditor
+                                    id={reviewEditModalId}
+                                    onSubmit={(id: number, rating: number, comment: string) => {
+                                        setReviewEditModalId(-1)
+                                        handleReviewEdition(id, rating, comment)
+                                    }}
+                                />
+                            </ModalCard>,
+                            document.body
+                        )}
+
+                        {reviewDeleteModalId !== -1 && createPortal(
+                            <ModalCard title="Delete review" onClose={() => setReviewDeleteModalId(-1)}>
+                                <ConfirmationPrompt
+                                    onCancel={() => setReviewDeleteModalId(-1)}
+                                    onConfirm={() => {
+                                        const reviewId = reviewDeleteModalId
+                                        setReviewDeleteModalId(-1)
+                                        handleReviewDelete(reviewId)
+                                    }}
+                                    buttonLabel="Delete"
+                                    message="Are you sure you want to delete your review ?"
                                 />
                             </ModalCard>,
                             document.body

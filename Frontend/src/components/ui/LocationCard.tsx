@@ -26,9 +26,9 @@ function LocationCard({ data, onClick, canManage, onEdit, onDelete }: Props) {
     }
 
     return (
-        <div className="border rounded-lg p-2" onClick={() => onClick()}>
+        <div className="relative border rounded-lg p-2" onClick={() => onClick()}>
             {canManage && (
-                <div className="flex gap-1 justify-end">
+                <div className="absolute top-2 right-2 flex gap-1 justify-end">
                     <button
                         type="button"
                         onClick={(e) => {
