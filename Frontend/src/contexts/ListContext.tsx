@@ -10,6 +10,7 @@ interface ListContextType {
     selectedLocation: Location | null
     submenu: 'search' | 'details'
     focusAt: LatLngExpression | null
+    listType: 'personal' | 'shared'
 
     // Callable functions
     search: (
@@ -25,11 +26,12 @@ interface ListContextType {
 
 interface Props {
     children: ReactNode
+    listType: 'personal' | 'shared'
 }
 
 export const ListContext = createContext<ListContextType | undefined>(undefined)
 
-export function ListProvider({ children }: Props) {
+export function ListProvider({ children, listType }: Props) {
     const [menu, setMenu] = useState<'search' | 'details'>('search')
     const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
     const [focusAt, setFocusAt] = useState<LatLngExpression | null>(null)
@@ -73,6 +75,7 @@ export function ListProvider({ children }: Props) {
                 selectedLocation,
                 submenu: menu,
                 focusAt,
+                listType,
 
                 search,
                 setSubmenu,

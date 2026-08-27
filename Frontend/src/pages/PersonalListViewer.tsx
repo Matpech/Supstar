@@ -21,7 +21,7 @@ function PersonalListViewer() {
 
     return (
         <div>
-            <ListProvider>
+            <ListProvider listType="personal">
                 <MapView />
                 <ListPanel />
             </ListProvider>

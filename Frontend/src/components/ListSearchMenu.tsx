@@ -9,9 +9,13 @@ import ModalCard from "./ui/ModalCard"
 import SearchFiltersMenu from "./SearchFiltersMenu"
 import LocationEditor from "./LocationEditor"
 import toast from "react-hot-toast"
+import { useParams } from "react-router-dom"
+import { useAuth } from "../hooks/useAuth"
 
 function ListSearchMenu() {
+    const params = useParams()
     const listCtx = useContext(ListContext)
+    const { ctx } = useAuth()
     if (!listCtx) {
         throw new Error("ListSearchMenu must be used inside ListProvider")
     }
@@ -30,6 +34,11 @@ function ListSearchMenu() {
         sort
     }), [query, filters, sort])
     const debouncedParams = useDebouncedValue(searchParams)
+
+    const canCreateLocation = useMemo(() => (
+        listCtx.listType === "personal"
+        && parseInt(params.user_id as string) === ctx.user?.id
+    ), [listCtx.listType, params])
 
     useEffect(() => {
         listCtx.search(
@@ -130,6 +139,7 @@ function ListSearchMenu() {
             {/* TODO: Actions available */}
             <div>
                 <GenericButton
+                    classNameOverride={canCreateLocation ? undefined : "hidden"}
                     type="primary"
                     action={() => setLocationCreateModalOpen(true)}
                 >
