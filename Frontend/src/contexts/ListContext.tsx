@@ -22,6 +22,8 @@ interface ListContextType {
     openLocation: (location: Location) => void
     resetFocusPoint: () => void
     createLocation: (data: Location) => Promise<Location>
+    updateLocation: (data: Location) => Promise<Location>
+    deleteLocation: (data: Location) => Promise<boolean>
 }
 
 interface Props {
@@ -67,6 +69,16 @@ export function ListProvider({ children, listType }: Props) {
         const newLocation = await pl.create(data)
         return newLocation
     }, [])
+
+    const updateLocation = useCallback(async (data: Location) => {
+        const updatedLocation = await pl.update(data)
+        return updatedLocation
+    }, [])
+
+    const deleteLocation = useCallback(async (data: Location) => {
+        const success = await pl.deleteLocation(data)
+        return success
+    }, [])
     
     return (
         <ListContext.Provider
@@ -81,7 +93,9 @@ export function ListProvider({ children, listType }: Props) {
                 setSubmenu,
                 openLocation,
                 resetFocusPoint,
-                createLocation
+                createLocation,
+                updateLocation,
+                deleteLocation
             }}
         >
             {children}

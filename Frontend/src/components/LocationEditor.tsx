@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import GenericButton from "./ui/GenericButton"
 import type { Location, LocationCategory, LocationStatus } from "../types/location";
 import { type CountryCode, countryCodes } from "../utils/iso3166";
@@ -58,9 +58,11 @@ function LocationEditor({ initialValue, onSubmit }: Props) {
         sunday: false
     })
     const [openingTimes, setOpeningTimes] = useState<OpeningTimes>({})
+    const [forceDisableButton, setForceDisableButton] = useState(false)
 
     const submitBtnDisabled = useMemo(() => {
         return (
+            forceDisableButton ||
             name.trim() === "" ||
             price < 0 ||
             address.trim() === "" ||
@@ -68,6 +70,30 @@ function LocationEditor({ initialValue, onSubmit }: Props) {
             !coordinates
         )
     }, [name, price, address, city, coordinates])
+
+    // If an initial value is provided, populate the fields
+    useEffect(() => {
+        if (!initialValue) return
+
+        setName(initialValue.name)
+        setDescription(initialValue.description || "")
+        setPrice(initialValue.price || 0)
+        setCategory(initialValue.category)
+        setStatus(initialValue.status)
+        setTags(initialValue.tags || [])
+        setAddress(initialValue.full_address)
+        setCity(initialValue.city)
+        setCountry(initialValue.country_code as CountryCode)
+        setCoordinates([initialValue.latitude, initialValue.longitude])
+
+        if (initialValue.opening_times) {
+            ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map((day) => {
+                if (initialValue.opening_times && initialValue.opening_times[day as Day]) {
+                    handleDayToggle(day as Day, true)
+                }
+            })
+        }
+    }, [])
 
     function addTag() {
         const trimmed = tagInput.trim()
@@ -145,7 +171,10 @@ function LocationEditor({ initialValue, onSubmit }: Props) {
             longitude: coordinates[1]
         }
 
+        // Disable button during the request
+        setForceDisableButton(true)
         await onSubmit(location)
+        setForceDisableButton(false)
     }
 
     return (

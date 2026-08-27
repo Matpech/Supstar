@@ -35,7 +35,7 @@ function ListSearchMenu() {
     }), [query, filters, sort])
     const debouncedParams = useDebouncedValue(searchParams)
 
-    const canCreateLocation = useMemo(() => (
+    const canManageLocations = useMemo(() => (
         listCtx.listType === "personal"
         && parseInt(params.user_id as string) === ctx.user?.id
     ), [listCtx.listType, params])
@@ -73,6 +73,37 @@ function ListSearchMenu() {
         if (data) {
             setLocationCreateModalOpen(false)
             toast.success("Location successfully created")
+            listCtx.search(
+                debouncedParams.query,
+                debouncedParams.filters,
+                debouncedParams.sort
+            )
+        }
+    }
+
+    async function handleEditLocation(location: Location) {
+        if (!listCtx) return false
+
+        const data = await listCtx.updateLocation(location)
+        if (data) {
+            toast.success("Successfully edited location")
+            listCtx.search(
+                debouncedParams.query,
+                debouncedParams.filters,
+                debouncedParams.sort
+            )
+            return true
+        } else {
+            return false
+        }
+    }
+
+    async function handleDeleteLocation(location: Location) {
+        if (!listCtx) return false
+
+        const success = await listCtx.deleteLocation(location)
+        if (success) {
+            toast.success("Location deleted")
             listCtx.search(
                 debouncedParams.query,
                 debouncedParams.filters,
@@ -132,14 +163,21 @@ function ListSearchMenu() {
             {/* Container for search results */}
             <div className="flex flex-col gap-1 overflow-y-auto">
                 {listCtx.locations.map((result) => (
-                    <LocationCard key={result.id} data={result} onClick={() => listCtx.openLocation(result)} /> 
+                    <LocationCard
+                        key={result.id}
+                        data={result}
+                        canManage={canManageLocations}
+                        onClick={() => listCtx.openLocation(result)}
+                        onEdit={handleEditLocation}
+                        onDelete={handleDeleteLocation}
+                    /> 
                 ))}
             </div>
 
             {/* TODO: Actions available */}
             <div>
                 <GenericButton
-                    classNameOverride={canCreateLocation ? undefined : "hidden"}
+                    classNameOverride={canManageLocations ? undefined : "hidden"}
                     type="primary"
                     action={() => setLocationCreateModalOpen(true)}
                 >

@@ -70,11 +70,46 @@ export function usePersonalList(userId: number) {
         return response.json
     }
 
+    async function update(data: Location) {
+        const locationId = data.id
+        const payload: any = data
+        delete payload.id
+        delete payload.user_id
+        delete payload.list_id
+
+        const response = await request(`/users/${userId}/locations/${locationId}`, {
+            method: "PATCH",
+            body: JSON.stringify(payload)
+        })
+
+        if (response.code !== 200) {
+            toast.error(`Failed to update location (${response.json.error})`)
+            return
+        }
+
+        return response.json
+    }
+
+    async function deleteLocation(location: Location) {
+        const response = await request(`/users/${userId}/locations/${location.id}`, {
+            method: "DELETE"
+        })
+
+        if (response.code !== 204) {
+            toast.error(`Failed to delete location (${response.json.error})`)
+            return false
+        }
+
+        return true
+    }
+
     return {
         locations,
         loading,
         search,
         fetchOne,
-        create
+        create,
+        update,
+        deleteLocation
     }
 }
