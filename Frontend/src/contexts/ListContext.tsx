@@ -20,6 +20,7 @@ interface ListContextType {
     setSubmenu: (submenu: 'search' | 'details') => void
     openLocation: (location: Location) => void
     resetFocusPoint: () => void
+    createLocation: (data: Location) => Promise<Location>
 }
 
 interface Props {
@@ -59,6 +60,11 @@ export function ListProvider({ children }: Props) {
     const resetFocusPoint = useCallback(() => {
         setFocusAt(null)
     }, [])
+
+    const createLocation = useCallback(async (data: Location) => {
+        const newLocation = await pl.create(data)
+        return newLocation
+    }, [])
     
     return (
         <ListContext.Provider
@@ -71,7 +77,8 @@ export function ListProvider({ children }: Props) {
                 search,
                 setSubmenu,
                 openLocation,
-                resetFocusPoint
+                resetFocusPoint,
+                createLocation
             }}
         >
             {children}

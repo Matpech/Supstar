@@ -53,10 +53,28 @@ export function usePersonalList(userId: number) {
         return response.json
     }
 
+    async function create(data: Location) {
+        const payload: any = data
+        delete payload.id
+
+        const response = await request(`/users/${userId}/locations`, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+
+        if (response.code !== 201) {
+            toast.error(`Failed to create location (${response.json.error})`)
+            return
+        }
+
+        return response.json
+    }
+
     return {
         locations,
         loading,
         search,
-        fetchOne
+        fetchOne,
+        create
     }
 }

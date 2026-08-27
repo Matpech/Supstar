@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react"
-import type { SearchFilters, SortOptions } from "../types/location"
+import type { Location, SearchFilters, SortOptions } from "../types/location"
 import GenericButton from "./ui/GenericButton"
 import { ListContext } from "../contexts/ListContext"
 import LocationCard from "./ui/LocationCard"
@@ -8,6 +8,7 @@ import { createPortal } from "react-dom"
 import ModalCard from "./ui/ModalCard"
 import SearchFiltersMenu from "./SearchFiltersMenu"
 import LocationEditor from "./LocationEditor"
+import toast from "react-hot-toast"
 
 function ListSearchMenu() {
     const listCtx = useContext(ListContext)
@@ -54,6 +55,21 @@ function ListSearchMenu() {
         }
 
         setFilters(processedFilters)
+    }
+
+    async function handleCreateLocation(location: Location) {
+        if (!listCtx) return
+
+        const data = await listCtx.createLocation(location)
+        if (data) {
+            setLocationCreateModalOpen(false)
+            toast.success("Location successfully created")
+            listCtx.search(
+                debouncedParams.query,
+                debouncedParams.filters,
+                debouncedParams.sort
+            )
+        }
     }
 
     return (
@@ -138,7 +154,7 @@ function ListSearchMenu() {
 
             {locationCreateModalOpen && createPortal(
                 <ModalCard title="New location" onClose={() => setLocationCreateModalOpen(false)}>
-                    <LocationEditor />
+                    <LocationEditor onSubmit={handleCreateLocation} />
                 </ModalCard>,
                 document.body
             )}

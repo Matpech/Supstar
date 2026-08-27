@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import GenericButton from "./ui/GenericButton"
-import type { LocationCategory, LocationStatus } from "../types/location";
+import type { Location, LocationCategory, LocationStatus } from "../types/location";
 import { type CountryCode, countryCodes } from "../utils/iso3166";
 import MapSelector from "./MapSelector";
-import type { LatLngExpression } from "leaflet";
+import type { LatLngTuple } from "leaflet";
+import toast from "react-hot-toast";
 
 type Day = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
 type OpeningTimesSingleDay = {
@@ -12,6 +13,11 @@ type OpeningTimesSingleDay = {
 }
 type OpeningTimes = Partial<Record<Day, OpeningTimesSingleDay>>
 type EnabledDays = Record<Day, boolean>
+
+interface Props {
+    initialValue?: Location
+    onSubmit: (location: Location) => Promise<void>
+}
 
 const categories: { value: LocationCategory; label: string }[] = [
     { value: "restaurant", label: "Restaurant" },
@@ -28,7 +34,7 @@ const statuses: { value: LocationStatus; label: string }[] = [
     { value: "favorite", label: "Favorite" }
 ]
 
-function LocationEditor() {
+function LocationEditor({ initialValue, onSubmit }: Props) {
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [price, setPrice] = useState(0)
@@ -40,7 +46,7 @@ function LocationEditor() {
     const [address, setAddress] = useState("")
     const [city, setCity] = useState("")
     const [country, setCountry] = useState<CountryCode | undefined>(undefined)
-    const [coordinates, setCoordinates] = useState<LatLngExpression | undefined>(undefined)
+    const [coordinates, setCoordinates] = useState<LatLngTuple | undefined>(undefined)
 
     const [enabledDays, setEnabledDays] = useState<EnabledDays>({
         monday: false,
@@ -52,6 +58,16 @@ function LocationEditor() {
         sunday: false
     })
     const [openingTimes, setOpeningTimes] = useState<OpeningTimes>({})
+
+    const submitBtnDisabled = useMemo(() => {
+        return (
+            name.trim() === "" ||
+            price < 0 ||
+            address.trim() === "" ||
+            city.trim() === "" ||
+            !coordinates
+        )
+    }, [name, price, address, city, coordinates])
 
     function addTag() {
         const trimmed = tagInput.trim()
@@ -81,8 +97,6 @@ function LocationEditor() {
             ...current,
             [day]: newOpeningTimes
         }))
-
-        console.log(`New state for ${day}: ${newStatus ? "enabled": "disabled"}`)
     }
 
     function handleTimeChange(day: Day, field: 'open' | 'close', value: string) {
@@ -93,6 +107,45 @@ function LocationEditor() {
                 [field]: value
             }
         }))
+    }
+
+    async function returnLocationObject() {
+        // Validate some fields to satisfy Typescript
+        // Most of the data is already validated if the submit button was enabled
+        if (!country) {
+            toast.error("No country selected")
+            return
+        }
+
+        if (!coordinates) {
+            toast.error("Please pin the location on the map")
+            return
+        }
+
+        // Build a location object and send it through onSubmit
+        const location: Location = {
+            // ID parameters
+            // id -1 is used when creating a new location
+            id: initialValue?.id ?? -1,
+            user_id: initialValue?.user_id,
+            list_id: initialValue?.list_id,
+
+            name,
+            category,
+            price,
+            description: description.trim() !== "" ? description : undefined,
+            opening_times: openingTimes,
+            tags: tags.length > 0 ? tags : undefined,
+            status,
+
+            full_address: address,
+            city,
+            country_code: country,
+            latitude: coordinates[0],
+            longitude: coordinates[1]
+        }
+
+        await onSubmit(location)
     }
 
     return (
@@ -331,7 +384,8 @@ function LocationEditor() {
                 {/* TODO: Add action */}
                 <GenericButton
                     type="primary"
-                    action={() => {}}
+                    action={() => returnLocationObject()}
+                    disabled={submitBtnDisabled}
                 >
                     Submit
                 </GenericButton>
