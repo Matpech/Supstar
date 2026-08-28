@@ -410,7 +410,6 @@ function LocationEditor({ initialValue, onSubmit }: Props) {
             </div>
 
             <div className="flex justify-end gap-3 px-6 py-4">
-                {/* TODO: Add action */}
                 <GenericButton
                     type="primary"
                     action={() => returnLocationObject()}
