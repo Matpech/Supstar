@@ -13,6 +13,8 @@ import ModalCard from "./ui/ModalCard"
 import ReviewEditor from "./ReviewEditor"
 import { useAuth } from "../hooks/useAuth"
 import ConfirmationPrompt from "./ui/ConfirmationPrompt"
+import PhotoUploadModal from "./PhotoUploadModal"
+import toast from "react-hot-toast"
 
 function LocationDetails() {
     const [tab, setTab] = useState<'details' | 'reviews' | 'photos'>('details')
@@ -21,6 +23,7 @@ function LocationDetails() {
     const [reviewCreateModalOpen, setReviewCreateModalOpen] = useState(false)
     const [reviewEditModalId, setReviewEditModalId] = useState(-1)
     const [reviewDeleteModalId, setReviewDeleteModalId] = useState(-1)
+    const [photoUploadModalOpen, setPhotoUploadModalOpen] = useState(false)
 
     const { ctx } = useAuth()
     const listCtx = useContext(ListContext)
@@ -109,6 +112,32 @@ function LocationDetails() {
                 return {
                     ...prev,
                     reviews: newArray
+                }
+            })
+        }
+    }
+
+    function handlePhotoUpload(files: File[]) {
+        if (!listCtx || !listCtx.selectedLocation) return
+        toast("Uploading photos...")
+        listCtx.uploadPhotos(listCtx.selectedLocation.id, files)
+        setPhotoUploadModalOpen(false)
+    }
+
+    async function handlePhotoDelete(imageId: string) {
+        if (!listCtx || !listCtx.selectedLocation) return
+        const success = await listCtx.deletePhoto(listCtx.selectedLocation.id, imageId)
+        if (success) {
+            setDetails((prev) => {
+                if (!prev) return null
+
+                const newGallery = prev.images
+                    ? [...prev.images].filter((img) => img !== imageId)
+                    : []
+
+                return {
+                    ...prev,
+                    images: newGallery
                 }
             })
         }
@@ -346,7 +375,7 @@ function LocationDetails() {
 
                 {/* Tab 3: photos */}
                 {tab === 'photos' && (
-                <div>
+                <div className="flex flex-col gap-4">
                     {details.images && details.images.length > 0 ? (
                         <div className="grid grid-cols-2">
                             {details.images.map(img => (
@@ -368,7 +397,25 @@ function LocationDetails() {
                             </div>
                         </div>
                     )}
+
+                    <GenericButton
+                        type="primary"
+                        action={() => setPhotoUploadModalOpen(true)}
+                        classNameOverride="w-full"
+                    >
+                        Upload photos
+                    </GenericButton>
                 </div>)}
+
+                {photoUploadModalOpen && createPortal(
+                    <ModalCard title="Upload photos" onClose={() => setPhotoUploadModalOpen(false)}>
+                        <PhotoUploadModal
+                            onCancel={() => setPhotoUploadModalOpen(false)}
+                            onUpload={handlePhotoUpload}
+                        />
+                    </ModalCard>,
+                    document.body
+                )}
 
                 {/* Photo view */}
                 {openedImage && createPortal(
@@ -380,7 +427,14 @@ function LocationDetails() {
                             bg-black/50 backdrop-blur-sm
                         `}
                     >
-                        <ImageViewer allImages={details.images} image={openedImage} setImage={(newImage: string) => setOpenedImage(newImage)} />
+                        {/* TODO: Get the canManage permission */}
+                        <ImageViewer
+                            allImages={details.images}
+                            image={openedImage}
+                            setImage={(newImage: string) => setOpenedImage(newImage)}
+                            canManage={true}
+                            onImageDelete={handlePhotoDelete}
+                        />
                     </div>,
                     document.body
                 )}

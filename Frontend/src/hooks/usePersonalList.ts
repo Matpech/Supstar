@@ -103,6 +103,40 @@ export function usePersonalList(userId: number) {
         return true
     }
 
+    async function uploadPhotosToGallery(locationId: number, photos: File[]) {
+        const payload = new FormData()
+        photos.forEach(file => {
+            payload.append("images", file)
+        })
+        
+        const response = await request(`/users/${userId}/locations/${locationId}/gallery`, {
+            method: "POST",
+            body: payload
+        })
+
+        if (response.code !== 201) {
+            toast.error(`Failed to upload photos (${response.json.error})`)
+            return
+        }
+
+        toast.success("Photos uploaded to gallery")
+    }
+
+    async function deletePhotoFromGallery(locationId: number, imageId: string) {
+        const response = await request(`/users/${userId}/locations/${locationId}/gallery`, {
+            method: "DELETE",
+            body: JSON.stringify({ imageId })
+        })
+
+        if (response.code !== 204) {
+            toast.error(`Failed to delete photo (${response.json.error})`)
+            return false
+        }
+
+        toast.success("Photo successfully deleted")
+        return true
+    }
+
     async function publishReview(locationId: number, data: ReviewBody) {
         const response = await request(`/users/${userId}/locations/${locationId}/reviews`, {
             method: "POST",
@@ -187,6 +221,8 @@ export function usePersonalList(userId: number) {
         create,
         update,
         deleteLocation,
+        uploadPhotosToGallery,
+        deletePhotoFromGallery,
         publishReview,
         updateReview,
         deleteReview,

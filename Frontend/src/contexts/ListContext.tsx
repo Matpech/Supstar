@@ -24,6 +24,8 @@ interface ListContextType {
     createLocation: (data: Location) => Promise<Location>
     updateLocation: (data: Location) => Promise<Location>
     deleteLocation: (data: Location) => Promise<boolean>
+    uploadPhotos: (locationId: number, photos: File[]) => void
+    deletePhoto: (locationId: number, imageId: string) => Promise<boolean>
     publishReview: (locationId: number, data: ReviewBody) => Promise<Review>
     updateReview: (locationId: number, reviewId: number, data: ReviewBody) => void
     deleteReview: (locationId: number, reviewId: number) => Promise<boolean>
@@ -85,6 +87,15 @@ export function ListProvider({ children, listType }: Props) {
         return success
     }, [])
 
+    const uploadPhotos = useCallback((locationId: number, photos: File[]) => {
+        pl.uploadPhotosToGallery(locationId, photos)
+    }, [])
+
+    const deletePhoto = useCallback(async (locationId: number, imageId: string) => {
+        const success = await pl.deletePhotoFromGallery(locationId, imageId)
+        return success
+    }, [])
+
     const publishReview = useCallback(async (locationId: number, data: ReviewBody) => {
         const newReview = await pl.publishReview(locationId, data)
         return newReview
@@ -123,6 +134,8 @@ export function ListProvider({ children, listType }: Props) {
                 createLocation,
                 updateLocation,
                 deleteLocation,
+                uploadPhotos,
+                deletePhoto,
                 publishReview,
                 updateReview,
                 deleteReview,
