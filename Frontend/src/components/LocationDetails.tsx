@@ -325,7 +325,7 @@ function LocationDetails() {
                         <GenericButton
                             type="primary"
                             action={() => setReviewCreateModalOpen(true)}
-                            classNameOverride="w-full"
+                            classNameOverride={listCtx.permissions.PUBLISH_REVIEWS ? "w-full" : "hidden"}
                         >
                             Write a review
                         </GenericButton>
@@ -401,7 +401,7 @@ function LocationDetails() {
                     <GenericButton
                         type="primary"
                         action={() => setPhotoUploadModalOpen(true)}
-                        classNameOverride="w-full"
+                        classNameOverride={listCtx.permissions.MANAGE_LOCATIONS ? "w-full" : "hidden"}
                     >
                         Upload photos
                     </GenericButton>
