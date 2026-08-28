@@ -15,6 +15,11 @@ export interface Review {
     comment?: string
 }
 
+export interface ReviewBody {
+    rating: number
+    comment?: string
+}
+
 export interface Location {
     id: number
     user_id?: number

@@ -4,7 +4,7 @@ import { ListContext } from "../contexts/ListContext"
 import { useParams } from "react-router-dom"
 import { usePersonalList } from "../hooks/usePersonalList"
 import { Banknote, Clock, ImageOff, Map, Pencil, Pin, PinOff, Star, StarCheck, StarX, Tag, Trash2 } from "lucide-react"
-import type { Location } from "../types/location"
+import type { Location, ReviewBody } from "../types/location"
 import { countryCodes, type CountryCode } from "../utils/iso3166"
 import GenericCard from "./ui/GenericCard"
 import { createPortal } from "react-dom"
@@ -62,90 +62,59 @@ function LocationDetails() {
     async function handleReviewSubmission(rating: number, comment: string) {
         if (!listCtx || !listCtx.selectedLocation) return
 
-        const payload: {
-            rating: number
-            comment?: string
-        } = { rating, comment: undefined }
+        const payload: ReviewBody = { rating }
 
         if (comment.trim().length > 0) {
             payload.comment = comment
         }
 
-        const response = await request(`/users/${userId}/locations/${listCtx.selectedLocation.id}/reviews`, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        })
-
-        if (response.code !== 201) {
-            toast.error(`Failed to submit your review (${response.json.error})`)
-            return
+        const review = await listCtx.publishReview(listCtx.selectedLocation.id, payload)
+        if (review) {
+            setDetails((prev) => {
+                if (!prev) return null
+    
+                const newArray = prev?.reviews
+                    ? [...prev.reviews, review]
+                    : [review]
+    
+                return {
+                    ...prev,
+                    reviews: newArray
+                }
+            })
         }
-
-        toast.success("Review submitted")
-        setDetails((prev) => {
-            if (!prev) return null
-
-            const newArray = prev?.reviews
-                ? [...prev.reviews, response.json]
-                : [response.json]
-
-            return {
-                ...prev,
-                reviews: newArray
-            }
-        })
     }
 
     async function handleReviewEdition(id: number, rating: number, comment: string) {
         if (!listCtx || !listCtx.selectedLocation) return
 
-        const payload: {
-            rating: number
-            comment?: string
-        } = { rating, comment: undefined }
+        const payload: ReviewBody = { rating }
 
         if (comment.trim().length > 0) {
             payload.comment = comment
         }
 
-        const response = await request(`/users/${userId}/locations/${listCtx.selectedLocation.id}/reviews/${id}`, {
-            method: "PATCH",
-            body: JSON.stringify(payload)
-        })
-
-        if (response.code !== 200) {
-            toast.error(`Failed to edit review (${response.json.error})`)
-            return
-        }
-
-        toast.success("Review updated")
+        listCtx.updateReview(listCtx.selectedLocation.id, id, payload)
     }
 
     async function handleReviewDelete(id: number) {
         if (!listCtx || !listCtx.selectedLocation) return
 
-        const response = await request(`/users/${userId}/locations/${listCtx.selectedLocation.id}/reviews/${id}`, {
-            method: "DELETE"
-        })
-
-        if (response.code !== 204) {
-            toast.error(`Failed to delete review (${response.json.error})`)
-            return
+        const deleted = await listCtx.deleteReview(listCtx.selectedLocation.id, id)
+        if (deleted) {
+            setDetails((prev) => {
+                if (!prev) return null
+    
+                const newArray = prev?.reviews
+                    ? [...prev.reviews].filter((r) => r.id !== id)
+                    : []
+    
+                return {
+                    ...prev,
+                    reviews: newArray
+                }
+            })
         }
-
-        toast.success("Review deleted")
-        setDetails((prev) => {
-            if (!prev) return null
-
-            const newArray = prev?.reviews
-                ? [...prev.reviews].filter((r) => r.id !== id)
-                : []
-
-            return {
-                ...prev,
-                reviews: newArray
-            }
-        })
     }
 
     return (

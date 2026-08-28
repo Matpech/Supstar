@@ -1,5 +1,5 @@
 import { createContext, useCallback, useState, type ReactNode } from "react";
-import type { Location, SearchFilters, SortOptions } from "../types/location";
+import type { Location, Review, ReviewBody, SearchFilters, SortOptions } from "../types/location";
 import type { LatLngExpression } from "leaflet";
 import { usePersonalList } from "../hooks/usePersonalList";
 import { useParams } from "react-router-dom";
@@ -24,6 +24,9 @@ interface ListContextType {
     createLocation: (data: Location) => Promise<Location>
     updateLocation: (data: Location) => Promise<Location>
     deleteLocation: (data: Location) => Promise<boolean>
+    publishReview: (locationId: number, data: ReviewBody) => Promise<Review>
+    updateReview: (locationId: number, reviewId: number, data: ReviewBody) => void
+    deleteReview: (locationId: number, reviewId: number) => Promise<boolean>
     importLocations: (file: File) => Promise<void>
     exportLocations: () => void
 }
@@ -82,6 +85,20 @@ export function ListProvider({ children, listType }: Props) {
         return success
     }, [])
 
+    const publishReview = useCallback(async (locationId: number, data: ReviewBody) => {
+        const newReview = await pl.publishReview(locationId, data)
+        return newReview
+    }, [])
+
+    const updateReview = useCallback((locationId: number, reviewId: number, data: ReviewBody) => {
+        pl.updateReview(locationId, reviewId, data)
+    }, [])
+
+    const deleteReview = useCallback(async (locationId: number, reviewId: number) => {
+        const success = await pl.deleteReview(locationId, reviewId)
+        return success
+    }, [])
+
     const importLocations = useCallback(async (file: File) => {
         await pl.importLocations(file)
     }, [])
@@ -106,6 +123,9 @@ export function ListProvider({ children, listType }: Props) {
                 createLocation,
                 updateLocation,
                 deleteLocation,
+                publishReview,
+                updateReview,
+                deleteReview,
                 importLocations,
                 exportLocations
             }}

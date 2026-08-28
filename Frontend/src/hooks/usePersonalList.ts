@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useApiClient } from "./useApiClient";
 import toast from "react-hot-toast";
-import type { Location, SearchFilters, SortOptions } from "../types/location";
+import type { Location, ReviewBody, SearchFilters, SortOptions } from "../types/location";
 
 export function usePersonalList(userId: number) {
     const { request, rawFetch } = useApiClient()
@@ -103,6 +103,49 @@ export function usePersonalList(userId: number) {
         return true
     }
 
+    async function publishReview(locationId: number, data: ReviewBody) {
+        const response = await request(`/users/${userId}/locations/${locationId}/reviews`, {
+            method: "POST",
+            body: JSON.stringify(data)
+        })
+
+        if (response.code !== 201) {
+            toast.error(`Failed to submit review (${response.json.error})`)
+            return null
+        }
+
+        toast.success("Review submitted")
+        return response.json
+    }
+
+    async function updateReview(locationId: number, reviewId: number, data: ReviewBody) {
+        const response = await request(`/users/${userId}/locations/${locationId}/reviews/${reviewId}`, {
+            method: "PATCH",
+            body: JSON.stringify(data)
+        })
+
+        if (response.code !== 200) {
+            toast.error(`Failed to edit review (${response.json.error})`)
+            return
+        }
+
+        toast.success("Review updated")
+    }
+
+    async function deleteReview(locationId: number, reviewId: number) {
+        const response = await request(`/users/${userId}/locations/${locationId}/reviews/${reviewId}`, {
+            method: "DELETE"
+        })
+
+        if (response.code !== 204) {
+            toast.error(`Failed to delete review (${response.json.error})`)
+            return false
+        }
+
+        toast.success("Review deleted")
+        return true
+    }
+
     async function importLocations(file: File) {
         const data = new FormData()
         data.append("data", file)
@@ -144,6 +187,9 @@ export function usePersonalList(userId: number) {
         create,
         update,
         deleteLocation,
+        publishReview,
+        updateReview,
+        deleteReview,
         importLocations,
         exportLocations
     }
