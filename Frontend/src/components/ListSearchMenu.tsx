@@ -9,14 +9,10 @@ import ModalCard from "./ui/ModalCard"
 import SearchFiltersMenu from "./SearchFiltersMenu"
 import LocationEditor from "./LocationEditor"
 import toast from "react-hot-toast"
-import { useParams } from "react-router-dom"
-import { useAuth } from "../hooks/useAuth"
 import LocationImportModal from "./LocationImportModal"
 
 function ListSearchMenu() {
-    const params = useParams()
     const listCtx = useContext(ListContext)
-    const { ctx } = useAuth()
     if (!listCtx) {
         throw new Error("ListSearchMenu must be used inside ListProvider")
     }
@@ -36,11 +32,6 @@ function ListSearchMenu() {
         sort
     }), [query, filters, sort])
     const debouncedParams = useDebouncedValue(searchParams)
-
-    const canManageLocations = useMemo(() => (
-        listCtx.listType === "personal"
-        && parseInt(params.user_id as string) === ctx.user?.id
-    ), [listCtx.listType, params])
 
     useEffect(() => {
         listCtx.search(
@@ -184,7 +175,7 @@ function ListSearchMenu() {
                     <LocationCard
                         key={result.id}
                         data={result}
-                        canManage={canManageLocations}
+                        canManage={listCtx.permissions.MANAGE_LOCATIONS}
                         onClick={() => listCtx.openLocation(result)}
                         onEdit={handleEditLocation}
                         onDelete={handleDeleteLocation}
@@ -192,10 +183,9 @@ function ListSearchMenu() {
                 ))}
             </div>
 
-            {/* TODO: Actions available */}
             <div className="flex gap-1">
                 <GenericButton
-                    classNameOverride={canManageLocations ? "w-full" : "hidden"}
+                    classNameOverride={listCtx.permissions.MANAGE_LOCATIONS ? "w-full" : "hidden"}
                     type="primary"
                     action={() => setLocationCreateModalOpen(true)}
                 >
@@ -203,7 +193,7 @@ function ListSearchMenu() {
                 </GenericButton>
 
                 <GenericButton
-                    classNameOverride={canManageLocations ? undefined : "hidden"}
+                    classNameOverride={listCtx.permissions.MANAGE_LOCATIONS ? undefined : "hidden"}
                     type="neutral"
                     action={handleExport}
                 >
@@ -211,7 +201,7 @@ function ListSearchMenu() {
                 </GenericButton>
 
                 <GenericButton
-                    classNameOverride={canManageLocations ? undefined : "hidden"}
+                    classNameOverride={listCtx.permissions.MANAGE_LOCATIONS ? undefined : "hidden"}
                     type="neutral"
                     action={() => setImportModalOpen(true)}
                 >

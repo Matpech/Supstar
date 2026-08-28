@@ -16,3 +16,10 @@ export interface SharedList {
         role: SLRoles
     }
 }
+
+export interface ListPermissions {
+    MANAGE_LIST: boolean
+    MANAGE_MEMBERS: boolean
+    MANAGE_LOCATIONS: boolean
+    PUBLISH_REVIEWS: boolean
+}

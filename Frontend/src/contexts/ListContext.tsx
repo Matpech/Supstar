@@ -1,8 +1,10 @@
-import { createContext, useCallback, useState, type ReactNode } from "react";
+import { createContext, useCallback, useEffect, useState, type ReactNode } from "react";
 import type { Location, Review, ReviewBody, SearchFilters, SortOptions } from "../types/location";
 import type { LatLngExpression } from "leaflet";
 import { usePersonalList } from "../hooks/usePersonalList";
 import { useParams } from "react-router-dom";
+import type { ListPermissions } from "../types/lists";
+import { useAuth } from "../hooks/useAuth";
 
 interface ListContextType {
     // Shared data
@@ -11,6 +13,7 @@ interface ListContextType {
     submenu: 'search' | 'details'
     focusAt: LatLngExpression | null
     listType: 'personal' | 'shared'
+    permissions: ListPermissions
 
     // Callable functions
     search: (
@@ -44,14 +47,32 @@ export function ListProvider({ children, listType }: Props) {
     const [menu, setMenu] = useState<'search' | 'details'>('search')
     const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
     const [focusAt, setFocusAt] = useState<LatLngExpression | null>(null)
+    const [permissions, setPermissions] = useState<ListPermissions>({
+        MANAGE_LIST: false,
+        MANAGE_MEMBERS: false,
+        MANAGE_LOCATIONS: false,
+        PUBLISH_REVIEWS: false
+    })
 
     // Parse and verify user ID
     const { user_id } = useParams()
+    const { ctx } = useAuth()
     const userId = parseInt(user_id as string)
     if (Number.isNaN(userId) || userId <= 0) {
         return
     }
     const pl = usePersonalList(userId)
+
+    // Define permissions
+    // This version works with PLs, will need to adapt for SLs
+    useEffect(() => {
+        setPermissions({
+            MANAGE_LIST: false,
+            MANAGE_MEMBERS: false,
+            MANAGE_LOCATIONS: userId === ctx.user?.id,
+            PUBLISH_REVIEWS: true
+        })
+    }, [])
 
     // Declare the callable functions
     const search = useCallback((query: string, filters: SearchFilters, sort: SortOptions) => {
@@ -126,6 +147,7 @@ export function ListProvider({ children, listType }: Props) {
                 submenu: menu,
                 focusAt,
                 listType,
+                permissions,
 
                 search,
                 setSubmenu,

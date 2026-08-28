@@ -427,12 +427,11 @@ function LocationDetails() {
                             bg-black/50 backdrop-blur-sm
                         `}
                     >
-                        {/* TODO: Get the canManage permission */}
                         <ImageViewer
                             allImages={details.images}
                             image={openedImage}
                             setImage={(newImage: string) => setOpenedImage(newImage)}
-                            canManage={true}
+                            canManage={listCtx.permissions.MANAGE_LOCATIONS}
                             onImageDelete={handlePhotoDelete}
                         />
                     </div>,
