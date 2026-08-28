@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import type { Location, SearchFilters, SortOptions } from "../types/location";
 
 export function usePersonalList(userId: number) {
-    const { request } = useApiClient()
+    const { request, rawFetch } = useApiClient()
 
     const [locations, setLocations] = useState<Location[]>([])
     const [loading, setLoading] = useState(false)
@@ -103,6 +103,39 @@ export function usePersonalList(userId: number) {
         return true
     }
 
+    async function importLocations(file: File) {
+        const data = new FormData()
+        data.append("data", file)
+
+        const response = await request("/self/pl-import", {
+            method: "POST",
+            body: data
+        })
+
+        if (response.code !== 200) {
+            toast.error(`Failed to import locations (${response.json.error})`)
+            return
+        }
+
+        toast.success(`${response.json.insertedCount} locations imported`)
+    }
+
+    async function exportLocations() {
+        const response = await rawFetch("/self/pl-export")
+        if (response.status !== 200) {
+            toast.error(`Failed to export personal list`)
+            return
+        }
+
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `pl-export.json`
+        a.click()
+        URL.revokeObjectURL(url)
+    }
+
     return {
         locations,
         loading,
@@ -110,6 +143,8 @@ export function usePersonalList(userId: number) {
         fetchOne,
         create,
         update,
-        deleteLocation
+        deleteLocation,
+        importLocations,
+        exportLocations
     }
 }

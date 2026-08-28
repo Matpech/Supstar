@@ -11,13 +11,12 @@ import LocationEditor from "./LocationEditor"
 import toast from "react-hot-toast"
 import { useParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
-import { useApiClient } from "../hooks/useApiClient"
+import LocationImportModal from "./LocationImportModal"
 
 function ListSearchMenu() {
     const params = useParams()
     const listCtx = useContext(ListContext)
     const { ctx } = useAuth()
-    const { rawFetch } = useApiClient()
     if (!listCtx) {
         throw new Error("ListSearchMenu must be used inside ListProvider")
     }
@@ -30,6 +29,7 @@ function ListSearchMenu() {
     const [filters, setFilters] = useState<SearchFilters>({})
     const [filtersModalOpen, setFiltersModalOpen] = useState(false)
     const [locationCreateModalOpen, setLocationCreateModalOpen] = useState(false)
+    const [importModalOpen, setImportModalOpen] = useState(false)
     const searchParams = useMemo(() => ({
         query,
         filters,
@@ -115,14 +115,19 @@ function ListSearchMenu() {
     }
 
     async function handleExport() {
-        const response = await rawFetch(`/self/pl-export`)
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `pl-export.json`
-        a.click()
-        URL.revokeObjectURL(url)
+        if (!listCtx) return
+        listCtx.exportLocations()
+    }
+
+    async function handleImport(file: File) {
+        if (!listCtx) return
+        await listCtx.importLocations(file)
+        setImportModalOpen(false)
+        listCtx.search(
+            debouncedParams.query,
+            debouncedParams.filters,
+            debouncedParams.sort
+        )
     }
 
     return (
@@ -204,6 +209,14 @@ function ListSearchMenu() {
                 >
                     Export
                 </GenericButton>
+
+                <GenericButton
+                    classNameOverride={canManageLocations ? undefined : "hidden"}
+                    type="neutral"
+                    action={() => setImportModalOpen(true)}
+                >
+                    Import
+                </GenericButton>
             </div>
 
             {filtersModalOpen && createPortal(
@@ -224,6 +237,16 @@ function ListSearchMenu() {
             {locationCreateModalOpen && createPortal(
                 <ModalCard title="New location" onClose={() => setLocationCreateModalOpen(false)}>
                     <LocationEditor onSubmit={handleCreateLocation} />
+                </ModalCard>,
+                document.body
+            )}
+
+            {importModalOpen && createPortal(
+                <ModalCard title="Import locations" onClose={() => setImportModalOpen(false)}>
+                    <LocationImportModal
+                        onCancel={() => setImportModalOpen(false)}
+                        onImport={handleImport}
+                    />
                 </ModalCard>,
                 document.body
             )}

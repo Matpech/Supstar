@@ -24,6 +24,8 @@ interface ListContextType {
     createLocation: (data: Location) => Promise<Location>
     updateLocation: (data: Location) => Promise<Location>
     deleteLocation: (data: Location) => Promise<boolean>
+    importLocations: (file: File) => Promise<void>
+    exportLocations: () => void
 }
 
 interface Props {
@@ -79,6 +81,14 @@ export function ListProvider({ children, listType }: Props) {
         const success = await pl.deleteLocation(data)
         return success
     }, [])
+
+    const importLocations = useCallback(async (file: File) => {
+        await pl.importLocations(file)
+    }, [])
+
+    const exportLocations = useCallback(() => {
+        pl.exportLocations()
+    }, [])
     
     return (
         <ListContext.Provider
@@ -95,7 +105,9 @@ export function ListProvider({ children, listType }: Props) {
                 resetFocusPoint,
                 createLocation,
                 updateLocation,
-                deleteLocation
+                deleteLocation,
+                importLocations,
+                exportLocations
             }}
         >
             {children}
