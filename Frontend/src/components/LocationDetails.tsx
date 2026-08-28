@@ -11,8 +11,6 @@ import { createPortal } from "react-dom"
 import ImageViewer from "./ImageViewer"
 import ModalCard from "./ui/ModalCard"
 import ReviewEditor from "./ReviewEditor"
-import { useApiClient } from "../hooks/useApiClient"
-import toast from "react-hot-toast"
 import { useAuth } from "../hooks/useAuth"
 import ConfirmationPrompt from "./ui/ConfirmationPrompt"
 
@@ -24,7 +22,6 @@ function LocationDetails() {
     const [reviewEditModalId, setReviewEditModalId] = useState(-1)
     const [reviewDeleteModalId, setReviewDeleteModalId] = useState(-1)
 
-    const { request } = useApiClient()
     const { ctx } = useAuth()
     const listCtx = useContext(ListContext)
     if (!listCtx) {
