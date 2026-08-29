@@ -270,19 +270,36 @@ export const checkSharedListPermissions = async (userId: number, listId: number,
 /**
  * Add a new member to a Shared List with a specific role
  * 
- * @param userId The unique ID of the user that joins the SL
+ * @param email The email of the user that joins the SL
  * @param listId The unique ID of the SL
  * @param role The role to give to the user upon joining the SL
+ * @returns The user ID and username that corresponds to the email
  * @throws ApiException (409, INVALID_ID or ALREADY_MEMBER) or DatabaseException
  * (500, Internal server error)
  */
-export const addMemberToList = async (userId: number, listId: number, role: SharedListRoles) => {
+export const addMemberToList = async (email: string, listId: number, role: SharedListRoles) => {
     try {
+        // Convert email to userId
+        const result = await pool.query(
+            "SELECT id, username FROM users WHERE email = $1",
+            [email]
+        )
+
+        if (!result.rows[0]) {
+            throw new NotFoundException("User")
+        }
+
         await pool.query(
             "INSERT INTO shared_list_members (user_id, list_id, role) VALUES ($1, $2, $3)",
-            [userId, listId, role]
+            [result.rows[0].id, listId, role]
         )
+
+        return result.rows[0]
     } catch (error) {
+        if (error instanceof ApiException) {
+            throw error
+        }
+        
         if (error instanceof Error && "code" in error && "constraint" in error) {
             switch (error.code) {
                 case "23503":
