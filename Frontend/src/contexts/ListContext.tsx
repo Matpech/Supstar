@@ -22,6 +22,7 @@ interface ListContextType {
         filters: SearchFilters,
         sort: SortOptions
     ) => void
+    getOneLocation: (locationId: number) => Promise<Location | null>
     setSubmenu: (submenu: 'search' | 'details') => void
     openLocation: (location: Location) => void
     resetFocusPoint: () => void
@@ -86,7 +87,6 @@ export function ListProvider({ children, listType }: Props) {
     }
 
     // Define permissions
-    // TODO: This version works with PLs, will need to adapt for SLs
     useEffect(() => {
         console.log("Defining permissions...")
 
@@ -133,6 +133,20 @@ export function ListProvider({ children, listType }: Props) {
 
     const resetFocusPoint = useCallback(() => {
         setFocusAt(null)
+    }, [])
+
+    const getOneLocation = useCallback(async (locationId: number) => {
+        if (listType === 'personal' && pl) {
+            const data = await pl.fetchOne(locationId)
+            if (!data) setSubmenu('search')
+            return data
+        } else if (listType === 'shared' && sl) {
+            const data = await sl.fetchLocation(locationId)
+            if (!data) setSubmenu('search')
+            return data
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
+        }
     }, [])
 
     const createLocation = useCallback(async (data: Location) => {
@@ -258,6 +272,7 @@ export function ListProvider({ children, listType }: Props) {
                 permissions,
 
                 search,
+                getOneLocation,
                 setSubmenu,
                 openLocation,
                 resetFocusPoint,

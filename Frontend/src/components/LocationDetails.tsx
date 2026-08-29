@@ -1,8 +1,6 @@
 import { useContext, useEffect, useState } from "react"
 import GenericButton from "./ui/GenericButton"
 import { ListContext } from "../contexts/ListContext"
-import { useParams } from "react-router-dom"
-import { usePersonalList } from "../hooks/usePersonalList"
 import { Banknote, Clock, ImageOff, Map, Pencil, Pin, PinOff, Star, StarCheck, StarX, Tag, Trash2 } from "lucide-react"
 import type { Location, ReviewBody } from "../types/location"
 import { countryCodes, type CountryCode } from "../utils/iso3166"
@@ -33,24 +31,11 @@ function LocationDetails() {
 
     if (!listCtx.selectedLocation) return
 
-    // Parse and verify user ID
-    const { user_id } = useParams()
-    const userId = parseInt(user_id as string)
-    if (Number.isNaN(userId) || userId <= 0) {
-        return
-    }
-    const pl = usePersonalList(userId)
-
     useEffect(() => {
         async function fetchLocation() {
             if (!listCtx || !listCtx.selectedLocation) return
-
-            try {
-                const data = await pl.fetchOne(listCtx.selectedLocation.id)
-                setDetails(data)
-            } catch (error) {
-                listCtx.setSubmenu('search')
-            }
+            const data = await listCtx.getOneLocation(listCtx.selectedLocation.id)
+            setDetails(data)
         }
 
         fetchLocation()
