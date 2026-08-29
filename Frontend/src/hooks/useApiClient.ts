@@ -56,8 +56,10 @@ export function useApiClient() {
             headers["Content-Type"] = "application/json"
         }
 
-        if (authContext.jwt) {
-            headers["Authorization"] = `Bearer ${authContext.jwt}`
+        const jwt = localStorage.getItem("supstar_jwt")
+
+        if (jwt) {
+            headers["Authorization"] = `Bearer ${jwt}`
         }
 
         let response = await fetch(url, {
@@ -107,8 +109,10 @@ export function useApiClient() {
             headers["Content-Type"] = "application/json"
         }
 
-        if (authContext.jwt) {
-            headers["Authorization"] = `Bearer ${authContext.jwt}`
+        const jwt = localStorage.getItem("supstar_jwt")
+
+        if (jwt) {
+            headers["Authorization"] = `Bearer ${jwt}`
         }
 
         let response = await fetch(url, {
