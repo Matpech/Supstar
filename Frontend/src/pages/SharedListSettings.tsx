@@ -21,6 +21,7 @@ function SharedListSettings() {
     const [disableNameBtn, setDisableNameBtn] = useState(false)
     const [disableDescBtn, setDisableDescBtn] = useState(false)
     const [inviteInput, setInviteInput] = useState("")
+    const [inviteRole, setInviteRole] = useState<SLRoles>(SLRoles.READER)
     const [transferInput, setTransferInput] = useState("")
     const [members, setMembers] = useState<{
         id: number,
@@ -115,6 +116,38 @@ function SharedListSettings() {
         navigate("/")
     }
 
+    async function handleAddMember() {
+        const response = await request(`/lists/${listId}/member`, {
+            method: "POST",
+            body: JSON.stringify({ username: inviteInput.trim(), role: inviteRole })
+        })
+
+        if (response.code !== 200) {
+            toast.error(`Failed to invite user "${inviteInput.trim()}" (${response.json.error})`)
+            return
+        }
+
+        toast.success(`${inviteInput.trim()} is now a member`)
+        setMembers([...members, response.json])
+    }
+
+    async function handleRemoveMember(userId: number) {
+        const response = await request(`/lists/${listId}/member`, {
+            method: "DELETE",
+            body: JSON.stringify({ userId })
+        })
+
+        if (response.code !== 204) {
+            toast.error(`Failed to remove user (${response.json.error})`)
+            return
+        }
+
+        const username = members.find((member) => member.id === userId)?.username
+
+        toast.success(`${username || "User"} has been removed from the list`)
+        setMembers((prev) => prev.filter((member) => member.id !== userId))
+    }
+
     async function handleOwnershipTransfer() {
         const response = await request(`/lists/${listId}/transfer-ownership`, {
             method: "POST",
@@ -201,12 +234,23 @@ function SharedListSettings() {
                                         value={inviteInput}
                                         onChange={(e) => setInviteInput(e.target.value)}
                                         placeholder="Username"
-                                        className="rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-black"
+                                        className="w-32 rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-black"
                                     />
 
+                                    <select
+                                        className="text-sm rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                                        value={inviteRole}
+                                        onChange={(e) => setInviteRole(e.target.value as SLRoles)}
+                                    >
+                                        <option value="reader">Reader</option>
+                                        <option value="commenter">Commenter</option>
+                                        <option value="editor">Editor</option>
+                                    </select>
+
                                     <GenericButton
+                                        disabled={inviteInput.trim() === ""}
                                         type="primary"
-                                        action={() => {}}
+                                        action={() => handleAddMember()}
                                     >
                                         Add member
                                     </GenericButton>
@@ -245,7 +289,7 @@ function SharedListSettings() {
                                                             <GenericButton
                                                                 classNameOverride="w-full"
                                                                 type="danger"
-                                                                action={() => {}}
+                                                                action={() => handleRemoveMember(member.id)}
                                                             >
                                                                 Remove
                                                             </GenericButton>
@@ -264,7 +308,7 @@ function SharedListSettings() {
 
                                                     <GenericButton
                                                         type="danger"
-                                                        action={() => {}}
+                                                        action={() => handleRemoveMember(member.id)}
                                                     >
                                                         Remove
                                                     </GenericButton>
