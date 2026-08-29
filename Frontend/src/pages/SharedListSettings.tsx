@@ -297,7 +297,7 @@ function SharedListSettings() {
                                             <td className="px-4 py-3 text-xs md:text-sm">{member.role}</td>
                                             <td className="flex flex-col md:flex-row gap-1">
                                                 {/* Mobile version - use an action menu */}
-                                                <div className="flex justify-end md:hidden">
+                                                {member.role !== SLRoles.OWNER && (<div className="flex justify-end md:hidden">
                                                     <MobileActionMenu>
                                                         <div className="flex flex-col gap-1">
                                                             <select className="text-xs rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black" onChange={(e) => {
@@ -319,10 +319,10 @@ function SharedListSettings() {
                                                             </GenericButton>
                                                         </div>
                                                     </MobileActionMenu>
-                                                </div>
+                                                </div>)}
 
                                                 {/* Desktop version - just show the actions */}
-                                                <div className="hidden md:flex gap-1">
+                                                {member.role !== SLRoles.OWNER && (<div className="hidden md:flex gap-1">
                                                     <select className="text-sm rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black" onChange={(e) => {
                                                         if (e.target.value === "") return
                                                         handleRoleUpdate(member.id, e.target.value as SLRoles)
@@ -339,7 +339,7 @@ function SharedListSettings() {
                                                     >
                                                         Remove
                                                     </GenericButton>
-                                                </div>
+                                                </div>)}
                                             </td>
                                         </tr>
                                     ))}
