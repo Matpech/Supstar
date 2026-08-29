@@ -14,6 +14,9 @@ import AppLayout from './components/layout/AppLayout'
 import AccountSettings from './pages/AccountSettings'
 import PersonalListViewer from './pages/PersonalListViewer'
 
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.css'
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css'
+
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <AuthProvider>
