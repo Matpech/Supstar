@@ -68,7 +68,7 @@ export function useSharedList(listId: number) {
         setLoading(false)
     }
 
-    async function fetchOne(locationId: number) {
+    async function fetchLocation(locationId: number) {
         const response = await request(`/lists/${listId}/locations/${locationId}`)
 
         if (response.code !== 200) {
@@ -79,7 +79,7 @@ export function useSharedList(listId: number) {
         return response.json
     }
 
-    async function create(data: Location) {
+    async function createLocation(data: Location) {
         const payload: any = data
         delete payload.id
 
@@ -96,7 +96,7 @@ export function useSharedList(listId: number) {
         return response.json
     }
 
-    async function update(data: Location) {
+    async function updateLocation(data: Location) {
         const locationId = data.id
         const payload: any = data
         delete payload.id
@@ -245,15 +245,19 @@ export function useSharedList(listId: number) {
         loading,
 
         search,
-        fetchOne,
-        create,
-        update,
+        fetchLocation,
+
+        createLocation,
+        updateLocation,
         deleteLocation,
+
         uploadPhotosToGallery,
         deletePhotoFromGallery,
+
         publishReview,
         updateReview,
         deleteReview,
+
         importLocations,
         exportLocations
     }

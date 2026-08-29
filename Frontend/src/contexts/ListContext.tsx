@@ -5,6 +5,7 @@ import { usePersonalList } from "../hooks/usePersonalList";
 import { useParams } from "react-router-dom";
 import type { ListPermissions } from "../types/lists";
 import { useAuth } from "../hooks/useAuth";
+import { useSharedList } from "../hooks/useSharedList";
 
 interface ListContextType {
     // Shared data
@@ -44,6 +45,7 @@ interface Props {
 export const ListContext = createContext<ListContextType | undefined>(undefined)
 
 export function ListProvider({ children, listType }: Props) {
+    const { ctx } = useAuth()
     const [menu, setMenu] = useState<'search' | 'details'>('search')
     const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
     const [focusAt, setFocusAt] = useState<LatLngExpression | null>(null)
@@ -54,14 +56,34 @@ export function ListProvider({ children, listType }: Props) {
         PUBLISH_REVIEWS: false
     })
 
+    let userId: number
+    let listId: number
+    let pl
+    let sl
+
     // Parse and verify user ID
-    const { user_id } = useParams()
-    const { ctx } = useAuth()
-    const userId = parseInt(user_id as string)
-    if (Number.isNaN(userId) || userId <= 0) {
-        return
+    if (listType === 'personal') {
+        const { user_id } = useParams()
+        userId = parseInt(user_id as string)
+        if (Number.isNaN(userId) || userId <= 0) {
+            return
+        }
+        pl = usePersonalList(userId)
+        sl = undefined
+    } else {
+        const { list_id } = useParams()
+        listId = parseInt(list_id as string)
+        if (Number.isNaN(listId) || listId <= 0) {
+            return
+        }
+        sl = useSharedList(listId)
+        pl = undefined
     }
-    const pl = usePersonalList(userId)
+
+    // Throw an error if neither pl/sl is defined
+    if (!sl && !pl) {
+        throw new Error("Context initialization failed (no pl/sl available)")
+    }
 
     // Define permissions
     // This version works with PLs, will need to adapt for SLs
@@ -76,7 +98,9 @@ export function ListProvider({ children, listType }: Props) {
 
     // Declare the callable functions
     const search = useCallback((query: string, filters: SearchFilters, sort: SortOptions) => {
-        pl.search({ query, filters, sort })
+        if (listType === 'personal' && pl) {
+            pl.search({ query, filters, sort })
+        }
     }, [])
 
     const setSubmenu = useCallback((submenu: 'search' | 'details') => {
@@ -94,55 +118,90 @@ export function ListProvider({ children, listType }: Props) {
     }, [])
 
     const createLocation = useCallback(async (data: Location) => {
-        const newLocation = await pl.create(data)
-        return newLocation
+        if (listType === 'personal' && pl) {
+            const newLocation = await pl.create(data)
+            return newLocation
+        }
     }, [])
 
     const updateLocation = useCallback(async (data: Location) => {
-        const updatedLocation = await pl.update(data)
-        return updatedLocation
+        if (listType === 'personal' && pl) {
+            const updatedLocation = await pl.update(data)
+            return updatedLocation
+        }
     }, [])
 
     const deleteLocation = useCallback(async (data: Location) => {
-        const success = await pl.deleteLocation(data)
-        return success
+        if (listType === 'personal' && pl) {
+            const success = await pl.deleteLocation(data)
+            return success
+        } else if (listType === 'shared' && sl) {
+            const success = await sl.deleteLocation(data)
+            return success
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
+        }
     }, [])
 
     const uploadPhotos = useCallback((locationId: number, photos: File[]) => {
-        pl.uploadPhotosToGallery(locationId, photos)
+        if (listType === 'personal' && pl) {
+            pl.uploadPhotosToGallery(locationId, photos)
+        }
     }, [])
 
     const deletePhoto = useCallback(async (locationId: number, imageId: string) => {
-        const success = await pl.deletePhotoFromGallery(locationId, imageId)
-        return success
+        if (listType === 'personal' && pl) {
+            const success = await pl.deletePhotoFromGallery(locationId, imageId)
+            return success
+        } else if (listType === 'shared' && sl) {
+            const success = await sl.deletePhotoFromGallery(locationId, imageId)
+            return success
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
+        }
     }, [])
 
     const publishReview = useCallback(async (locationId: number, data: ReviewBody) => {
-        const newReview = await pl.publishReview(locationId, data)
-        return newReview
+        if (listType === 'personal' && pl) {
+            const newReview = await pl.publishReview(locationId, data)
+            return newReview
+        }
     }, [])
 
     const updateReview = useCallback((locationId: number, reviewId: number, data: ReviewBody) => {
-        pl.updateReview(locationId, reviewId, data)
+        if (listType === 'personal' && pl) {
+            pl.updateReview(locationId, reviewId, data)
+        }
     }, [])
 
     const deleteReview = useCallback(async (locationId: number, reviewId: number) => {
-        const success = await pl.deleteReview(locationId, reviewId)
-        return success
+        if (listType === 'personal' && pl) {
+            const success = await pl.deleteReview(locationId, reviewId)
+            return success
+        } else if (listType === 'shared' && sl) {
+            const success = await sl.deleteReview(locationId, reviewId)
+            return success
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
+        }
     }, [])
 
     const importLocations = useCallback(async (file: File) => {
-        await pl.importLocations(file)
+        if (listType === 'personal' && pl) {
+            await pl.importLocations(file)
+        }
     }, [])
 
     const exportLocations = useCallback(() => {
-        pl.exportLocations()
+        if (listType === 'personal' && pl) {
+            pl.exportLocations()
+        }
     }, [])
     
     return (
         <ListContext.Provider
             value={{
-                locations: pl.locations,
+                locations: pl?.locations || sl?.locations || [],
                 selectedLocation,
                 submenu: menu,
                 focusAt,
