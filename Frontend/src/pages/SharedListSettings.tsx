@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import toast from "react-hot-toast"
 import GenericCard from "../components/ui/GenericCard"
@@ -148,13 +148,10 @@ function SharedListSettings() {
         setMembers((prev) => prev.filter((member) => member.id !== userId))
     }
 
-    // TODO: Fix bug where the role disappears from the table after the second role update
-    async function handleRoleUpdate(userId: number, e: ChangeEvent<HTMLSelectElement>) {
-        if (e.target.value === "") return
-        
+    async function handleRoleUpdate(userId: number, role: SLRoles) {
         const response = await request(`/lists/${listId}/member`, {
             method: "PATCH",
-            body: JSON.stringify({ userId, role: e.target.value })
+            body: JSON.stringify({ userId, role })
         })
 
         if (response.code !== 204) {
@@ -162,17 +159,14 @@ function SharedListSettings() {
             return
         }
 
-        console.log(e.target.value)
-
         toast.success("Role updated successfully")
         setMembers(prev =>
             prev.map(member =>
                 member.id === userId
-                    ? { ...member, role: e.target.value as SLRoles }
+                    ? { ...member, role }
                     : member
             )
         )
-        e.target.value = ""
     }
 
     async function handleOwnershipTransfer() {
@@ -306,7 +300,10 @@ function SharedListSettings() {
                                                 <div className="flex justify-end md:hidden">
                                                     <MobileActionMenu>
                                                         <div className="flex flex-col gap-1">
-                                                            <select className="text-xs rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black" onChange={(e) => handleRoleUpdate(member.id, e)}>
+                                                            <select className="text-xs rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black" onChange={(e) => {
+                                                                if (e.target.value === "") return
+                                                                handleRoleUpdate(member.id, e.target.value as SLRoles)
+                                                            }}>
                                                                 <option value="">Set new role</option>
                                                                 <option value="reader">Reader</option>
                                                                 <option value="commenter">Commenter</option>
@@ -326,7 +323,10 @@ function SharedListSettings() {
 
                                                 {/* Desktop version - just show the actions */}
                                                 <div className="hidden md:flex gap-1">
-                                                    <select className="text-sm rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black" onChange={(e) => handleRoleUpdate(member.id, e)}>
+                                                    <select className="text-sm rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black" onChange={(e) => {
+                                                        if (e.target.value === "") return
+                                                        handleRoleUpdate(member.id, e.target.value as SLRoles)
+                                                    }}>
                                                         <option value="">Set new role</option>
                                                         <option value="reader">Reader</option>
                                                         <option value="commenter">Commenter</option>
