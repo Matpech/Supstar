@@ -100,10 +100,10 @@ router.post("/:sl_id/member", requireLoggedIn, async (req, res) => {
     }
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.OWNER)
 
-    const userInfo = await addMemberToList(data.email, sl_id.value, data.role)
+    const userId = await addMemberToList(data.username, sl_id.value, data.role)
     return res.status(200).json({
-        id: userInfo.id,
-        username: userInfo.username,
+        id: userId,
+        username: data.username,
         role: data.role
     })
 })

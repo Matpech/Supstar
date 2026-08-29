@@ -11,7 +11,7 @@ export const sharedListUpdateSchema = Joi.object({
 })
 
 export const sharedListAddMemberSchema = Joi.object({
-    email: Joi.string().email({ minDomainSegments: 2 }).required(),
+    username: Joi.string().min(3).max(32).required(),
     role: Joi.string().valid('reader', 'commenter', 'editor').default('reader')
 })
 

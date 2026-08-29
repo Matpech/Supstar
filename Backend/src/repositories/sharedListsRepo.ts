@@ -270,19 +270,19 @@ export const checkSharedListPermissions = async (userId: number, listId: number,
 /**
  * Add a new member to a Shared List with a specific role
  * 
- * @param email The email of the user that joins the SL
+ * @param username The username of the user that joins the SL
  * @param listId The unique ID of the SL
  * @param role The role to give to the user upon joining the SL
- * @returns The user ID and username that corresponds to the email
+ * @returns The user ID that corresponds to the email
  * @throws ApiException (409, INVALID_ID or ALREADY_MEMBER) or DatabaseException
  * (500, Internal server error)
  */
-export const addMemberToList = async (email: string, listId: number, role: SharedListRoles) => {
+export const addMemberToList = async (username: string, listId: number, role: SharedListRoles) => {
     try {
         // Convert email to userId
         const result = await pool.query(
-            "SELECT id, username FROM users WHERE email = $1",
-            [email]
+            "SELECT id FROM users WHERE LOWER(username) = $1",
+            [username.toLowerCase()]
         )
 
         if (!result.rows[0]) {
@@ -294,7 +294,7 @@ export const addMemberToList = async (email: string, listId: number, role: Share
             [result.rows[0].id, listId, role]
         )
 
-        return result.rows[0]
+        return result.rows[0].id
     } catch (error) {
         if (error instanceof ApiException) {
             throw error
