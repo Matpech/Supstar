@@ -144,8 +144,8 @@ export const getOneSharedList = async (listId: number, userId: number) => {
                     sl.*,
                     slm.role
                 FROM shared_lists sl
-                INNER JOIN shared_list_members slm ON slm.user_id = $2
-                WHERE id = $1
+                INNER JOIN shared_list_members slm ON slm.user_id = $2 AND slm.list_id = $1
+                WHERE sl.id = $1
             `, [listId, userId]
         )
 

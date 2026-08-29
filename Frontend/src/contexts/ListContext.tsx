@@ -3,7 +3,7 @@ import type { Location, Review, ReviewBody, SearchFilters, SortOptions } from ".
 import type { LatLngExpression } from "leaflet";
 import { usePersonalList } from "../hooks/usePersonalList";
 import { useParams } from "react-router-dom";
-import type { ListPermissions } from "../types/lists";
+import { SLRoles, type ListPermissions } from "../types/lists";
 import { useAuth } from "../hooks/useAuth";
 import { useSharedList } from "../hooks/useSharedList";
 
@@ -86,20 +86,38 @@ export function ListProvider({ children, listType }: Props) {
     }
 
     // Define permissions
-    // This version works with PLs, will need to adapt for SLs
+    // TODO: This version works with PLs, will need to adapt for SLs
     useEffect(() => {
-        setPermissions({
+        console.log("Defining permissions...")
+
+        let permissions: ListPermissions = {
             MANAGE_LIST: false,
             MANAGE_MEMBERS: false,
-            MANAGE_LOCATIONS: userId === ctx.user?.id,
-            PUBLISH_REVIEWS: true
-        })
-    }, [])
+            MANAGE_LOCATIONS: false,
+            PUBLISH_REVIEWS: false
+        }
+
+        if (listType === 'personal') {
+            permissions.MANAGE_LOCATIONS = (userId === ctx.user?.id)
+            permissions.PUBLISH_REVIEWS = true
+        } else if (listType === 'shared' && sl) {
+            permissions.MANAGE_LIST = (sl.details?.role === SLRoles.OWNER)
+            permissions.MANAGE_MEMBERS = (sl.details?.role === SLRoles.OWNER)
+            permissions.MANAGE_LOCATIONS = (sl.details?.role === SLRoles.OWNER || sl.details?.role === SLRoles.EDITOR)
+            permissions.PUBLISH_REVIEWS = (sl.details?.role !== SLRoles.READER)
+        }
+
+        setPermissions(permissions)
+    }, [sl?.details])
 
     // Declare the callable functions
     const search = useCallback((query: string, filters: SearchFilters, sort: SortOptions) => {
         if (listType === 'personal' && pl) {
             pl.search({ query, filters, sort })
+        } else if (listType === 'shared' && sl) {
+            sl.search({ query, filters, sort })
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
         }
     }, [])
 
@@ -121,6 +139,11 @@ export function ListProvider({ children, listType }: Props) {
         if (listType === 'personal' && pl) {
             const newLocation = await pl.create(data)
             return newLocation
+        } else if (listType === 'shared' && sl) {
+            const newLocation = await sl.createLocation(data)
+            return newLocation
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
         }
     }, [])
 
@@ -128,6 +151,11 @@ export function ListProvider({ children, listType }: Props) {
         if (listType === 'personal' && pl) {
             const updatedLocation = await pl.update(data)
             return updatedLocation
+        } else if (listType == 'shared' && sl) {
+            const updatedLocation = await sl.updateLocation(data)
+            return updatedLocation
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
         }
     }, [])
 
@@ -146,6 +174,10 @@ export function ListProvider({ children, listType }: Props) {
     const uploadPhotos = useCallback((locationId: number, photos: File[]) => {
         if (listType === 'personal' && pl) {
             pl.uploadPhotosToGallery(locationId, photos)
+        } else if (listType === 'shared' && sl) {
+            sl.uploadPhotosToGallery(locationId, photos)
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
         }
     }, [])
 
@@ -165,12 +197,21 @@ export function ListProvider({ children, listType }: Props) {
         if (listType === 'personal' && pl) {
             const newReview = await pl.publishReview(locationId, data)
             return newReview
+        } else if (listType === 'shared' && sl) {
+            const newReview = await sl.publishReview(locationId, data)
+            return newReview
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
         }
     }, [])
 
     const updateReview = useCallback((locationId: number, reviewId: number, data: ReviewBody) => {
         if (listType === 'personal' && pl) {
             pl.updateReview(locationId, reviewId, data)
+        } else if (listType === 'shared' && sl) {
+            sl.updateReview(locationId, reviewId, data)
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
         }
     }, [])
 
@@ -189,12 +230,20 @@ export function ListProvider({ children, listType }: Props) {
     const importLocations = useCallback(async (file: File) => {
         if (listType === 'personal' && pl) {
             await pl.importLocations(file)
+        } else if (listType === 'shared' && sl) {
+            await sl.importLocations(file)
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
         }
     }, [])
 
     const exportLocations = useCallback(() => {
         if (listType === 'personal' && pl) {
             pl.exportLocations()
+        } else if (listType === 'shared' && sl) {
+            sl.exportLocations()
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
         }
     }, [])
     
