@@ -7,6 +7,9 @@ import { useSharedList } from "../hooks/useSharedList"
 import { SLRoles } from "../types/lists"
 import { useApiClient } from "../hooks/useApiClient"
 import MobileActionMenu from "../components/ui/MobileActionMenu"
+import { createPortal } from "react-dom"
+import ConfirmationPrompt from "../components/ui/ConfirmationPrompt"
+import ModalCard from "../components/ui/ModalCard"
 
 function SharedListSettings() {
     const navigate = useNavigate()
@@ -18,11 +21,15 @@ function SharedListSettings() {
     const [disableNameBtn, setDisableNameBtn] = useState(false)
     const [disableDescBtn, setDisableDescBtn] = useState(false)
     const [inviteInput, setInviteInput] = useState("")
+    const [transferInput, setTransferInput] = useState("")
     const [members, setMembers] = useState<{
         id: number,
         username: string,
         role: SLRoles
     }[]>([])
+
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+    const [confirmTransferOpen, setConfirmTransferOpen] = useState(false)
 
     const { list_id } = useParams()
     const listId = parseInt(list_id as string)
@@ -90,6 +97,39 @@ function SharedListSettings() {
         setTimeout(() => {
             setDisableDescBtn(false)
         }, 1000)
+    }
+
+    async function handleDelete() {
+        const response = await request(`/lists/${listId}`, {
+            method: "DELETE"
+        })
+
+        if (response.code !== 204) {
+            toast.error(`Failed to delete the shared list (${response.json.error})`)
+            setConfirmDeleteOpen(false)
+            return
+        }
+
+        toast.success("Shared list deleted")
+        setConfirmDeleteOpen(false)
+        navigate("/")
+    }
+
+    async function handleOwnershipTransfer() {
+        const response = await request(`/lists/${listId}/transfer-ownership`, {
+            method: "POST",
+            body: JSON.stringify({ username: transferInput.trim() })
+        })
+
+        if (response.code !== 204) {
+            toast.error(`Failed to transfer ownership (${response.json.error})`)
+            setConfirmTransferOpen(false)
+            return
+        }
+
+        toast.success(`${transferInput.trim()} was successfully promoted as the new list owner`)
+        setConfirmTransferOpen(false)
+        navigate("..")
     }
 
     return (
@@ -243,27 +283,50 @@ function SharedListSettings() {
                             <p className="mb-2 italic text-gray-500">This action will irreversibly delete the list and all saved locations.</p>
                             <GenericButton
                                 type="danger"
-                                action={() => {}}
+                                action={() => setConfirmDeleteOpen(true)}
                             >
                                 Delete List
                             </GenericButton>
+                            {confirmDeleteOpen && createPortal(
+                                <ModalCard title="Delete shared list" onClose={() => setConfirmDeleteOpen(false)}>
+                                    <ConfirmationPrompt
+                                        message="Are you sure you want to delete your shared list ?"
+                                        delay={1000}
+                                        onCancel={() => setConfirmDeleteOpen(false)}
+                                        onConfirm={() => handleDelete()}
+                                    />
+                                </ModalCard>,
+                                document.body
+                            )}
 
                             <p className="mt-2 text-xl">Transfer ownership</p>
                             <p className="mb-2 italic text-gray-500">You will be granted the "Editor" role once ownership is transferred.</p>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
-                                    value={""}
-                                    onChange={(e) => {}}
+                                    value={transferInput}
+                                    onChange={(e) => setTransferInput(e.target.value)}
                                     placeholder="Enter username"
                                     className="rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-black"
                                 />
                                 <GenericButton
+                                    disabled={transferInput.trim() === ""}
                                     type="danger"
-                                    action={() => {}}
+                                    action={() => setConfirmTransferOpen(true)}
                                 >
                                     Transfer ownership
                                 </GenericButton>
+                                {confirmTransferOpen && createPortal(
+                                    <ModalCard title="Transfer ownership" onClose={() => setConfirmTransferOpen(false)}>
+                                        <ConfirmationPrompt
+                                            message={`Are you sure you want to transfer ownership of this list to ${transferInput.trim()} ?`}
+                                            delay={1000}
+                                            onCancel={() => setConfirmTransferOpen(false)}
+                                            onConfirm={() => handleOwnershipTransfer()}
+                                        />
+                                    </ModalCard>,
+                                    document.body
+                                )}
                             </div>
                         </GenericCard>
                     </div>

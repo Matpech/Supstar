@@ -23,3 +23,7 @@ export const sharedListUpdateMemberRoleSchema = Joi.object({
     userId: Joi.number().positive().not(0).required(),
     role: Joi.string().valid('reader', 'commenter', 'editor').required()
 })
+
+export const sharedListTransferOwnershipSchema = Joi.object({
+    username: Joi.string().min(3).max(32).required()
+})

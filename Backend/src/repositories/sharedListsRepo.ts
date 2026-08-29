@@ -389,20 +389,32 @@ export const changeSLMemberRole = async (userId: number, listId: number, newRole
  * The current owner is given the editor role after ownership transfer.
  * 
  * @param oldOwner The user ID of the current owner of the SL
- * @param newOwner The user ID of the new owner of the SL
+ * @param username The username of the new owner of the SL
  * @param listId The unique ID of the SL
  * @throws NotFoundException or DatabaseException (500, Internal server error)
  */
-export const transferSLOwnership = async (oldOwner: number, newOwner: number, listId: number) => {
+export const transferSLOwnership = async (oldOwner: number, username: string, listId: number) => {
     const client = await pool.connect()
-
-    if (oldOwner == newOwner) {
-        throw new ApiException(409, "IDENTICAL_IDS", "The IDs of the old owner and the new owner are identical")
-    }
     
     try {
         // Begin a transaction
         await client.query("BEGIN")
+
+        const resultId = await client.query(
+            "SELECT id FROM users WHERE LOWER(username) = $1",
+            [username.toLowerCase()]
+        )
+
+        if (!resultId.rows[0]) {
+            throw new NotFoundException("User")
+        }
+
+        const newOwner: number = resultId.rows[0].id
+
+        // Check if IDs are identical
+        if (oldOwner == newOwner) {
+            throw new ApiException(409, "IDENTICAL_IDS", "The IDs of the old owner and the new owner are identical")
+        }
 
         // Demote the old owner to the editor role (in the member list)
         await client.query(

@@ -3,7 +3,7 @@ import { requireLoggedIn } from "../middlewares/authMiddlewares";
 import { ApiException, InvalidTokenException, ValidationException } from "../types/errors";
 import { addMemberToList, changeSLMemberRole, checkSharedListPermissions, createSharedList, deleteSharedList, getAvailableSharedLists, getOneSharedList, removeMemberFromList, transferSLOwnership, updateSharedListDetails } from "../repositories/sharedListsRepo";
 import validate from "../utils/validation/validator";
-import { sharedListAddMemberSchema, sharedListCreateSchema, sharedListRemoveMemberSchema, sharedListUpdateMemberRoleSchema, sharedListUpdateSchema } from "../utils/validation/schemas/sharedListsSchemas";
+import { sharedListAddMemberSchema, sharedListCreateSchema, sharedListRemoveMemberSchema, sharedListTransferOwnershipSchema, sharedListUpdateMemberRoleSchema, sharedListUpdateSchema } from "../utils/validation/schemas/sharedListsSchemas";
 import { numericIdSchema } from "../utils/validation/schemas/generalSchemas";
 import { SharedListRoles } from "../types/sharedLists";
 import SLLocationsRouter from "./sharedListLocationsRouter";
@@ -145,14 +145,14 @@ router.post("/:sl_id/transfer-ownership", requireLoggedIn, async (req, res) => {
         throw new InvalidTokenException()
     }
 
-    const { userId } = validate(req, sharedListRemoveMemberSchema) as { userId: number }
+    const { username } = validate(req, sharedListTransferOwnershipSchema) as { username: string }
     const sl_id = numericIdSchema.validate(parseInt(req.params.sl_id as string))
     if (!sl_id.value) {
         throw new ValidationException("Invalid numeric ID")
     }
     await checkSharedListPermissions(req.user.id, sl_id.value, SharedListRoles.OWNER)
 
-    await transferSLOwnership(req.user.id, userId, sl_id.value)
+    await transferSLOwnership(req.user.id, username, sl_id.value)
     return res.sendStatus(204)
 })
 
