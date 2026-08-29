@@ -1,13 +1,39 @@
-import { useState } from "react";
-import { useApiClient } from "./useApiClient";
-import toast from "react-hot-toast";
-import type { Location, ReviewBody, SearchFilters, SortOptions } from "../types/location";
+import { useEffect, useState } from "react"
+import type { Location, ReviewBody, SearchFilters, SortOptions } from "../types/location"
+import toast from "react-hot-toast"
+import { useApiClient } from "./useApiClient"
+import type { SharedList } from "../types/lists"
+import { useNavigate } from "react-router-dom"
 
-export function usePersonalList(userId: number) {
+export function useSharedList(listId: number) {
     const { request, rawFetch } = useApiClient()
-
+    const navigate = useNavigate()
+    
+    const [details, setDetails] = useState<SharedList | null>(null)
     const [locations, setLocations] = useState<Location[]>([])
     const [loading, setLoading] = useState(false)
+    
+    // Fetch details about the list
+    useEffect(() => {
+        async function fetchSlDetails() {
+            const response = await request(`/lists/${listId}`)
+
+            if (response.code !== 200) {
+                if (response.code === 403) {
+                    toast.error("You do not have access to this list")
+                } else {
+                    toast.error(`Failed to fetch list (${response.json.error})`)
+                }
+                
+                navigate("/")
+                return
+            }
+
+            setDetails(response.json)
+        }
+
+        fetchSlDetails()
+    }, [listId])
 
     async function search(params?: {
         query: string
@@ -28,7 +54,7 @@ export function usePersonalList(userId: number) {
             delete searchParams.query
         }
 
-        const response = await request(`/users/${userId}/locations/search`, searchParams ? {
+        const response = await request(`/lists/${listId}/locations/search`, searchParams ? {
             method: "POST",
             body: JSON.stringify(searchParams)
         } : { method: "POST" })
@@ -43,7 +69,7 @@ export function usePersonalList(userId: number) {
     }
 
     async function fetchOne(locationId: number) {
-        const response = await request(`/users/${userId}/locations/${locationId}`)
+        const response = await request(`/lists/${listId}/locations/${locationId}`)
 
         if (response.code !== 200) {
             toast.error(`Failed to fetch location (${response.json.error})`)
@@ -57,7 +83,7 @@ export function usePersonalList(userId: number) {
         const payload: any = data
         delete payload.id
 
-        const response = await request(`/users/${userId}/locations`, {
+        const response = await request(`/lists/${listId}/locations`, {
             method: "POST",
             body: JSON.stringify(payload)
         })
@@ -77,7 +103,7 @@ export function usePersonalList(userId: number) {
         delete payload.user_id
         delete payload.list_id
 
-        const response = await request(`/users/${userId}/locations/${locationId}`, {
+        const response = await request(`/lists/${listId}/locations/${locationId}`, {
             method: "PATCH",
             body: JSON.stringify(payload)
         })
@@ -91,7 +117,7 @@ export function usePersonalList(userId: number) {
     }
 
     async function deleteLocation(location: Location) {
-        const response = await request(`/users/${userId}/locations/${location.id}`, {
+        const response = await request(`/lists/${listId}/locations/${location.id}`, {
             method: "DELETE"
         })
 
@@ -109,7 +135,7 @@ export function usePersonalList(userId: number) {
             payload.append("images", file)
         })
         
-        const response = await request(`/users/${userId}/locations/${locationId}/gallery`, {
+        const response = await request(`/lists/${listId}/locations/${locationId}/gallery`, {
             method: "POST",
             body: payload
         })
@@ -123,7 +149,7 @@ export function usePersonalList(userId: number) {
     }
 
     async function deletePhotoFromGallery(locationId: number, imageId: string) {
-        const response = await request(`/users/${userId}/locations/${locationId}/gallery`, {
+        const response = await request(`/lists/${listId}/locations/${locationId}/gallery`, {
             method: "DELETE",
             body: JSON.stringify({ imageId })
         })
@@ -138,7 +164,7 @@ export function usePersonalList(userId: number) {
     }
 
     async function publishReview(locationId: number, data: ReviewBody) {
-        const response = await request(`/users/${userId}/locations/${locationId}/reviews`, {
+        const response = await request(`/lists/${listId}/locations/${locationId}/reviews`, {
             method: "POST",
             body: JSON.stringify(data)
         })
@@ -153,7 +179,7 @@ export function usePersonalList(userId: number) {
     }
 
     async function updateReview(locationId: number, reviewId: number, data: ReviewBody) {
-        const response = await request(`/users/${userId}/locations/${locationId}/reviews/${reviewId}`, {
+        const response = await request(`/lists/${listId}/locations/${locationId}/reviews/${reviewId}`, {
             method: "PATCH",
             body: JSON.stringify(data)
         })
@@ -167,7 +193,7 @@ export function usePersonalList(userId: number) {
     }
 
     async function deleteReview(locationId: number, reviewId: number) {
-        const response = await request(`/users/${userId}/locations/${locationId}/reviews/${reviewId}`, {
+        const response = await request(`/lists/${listId}/locations/${locationId}/reviews/${reviewId}`, {
             method: "DELETE"
         })
 
@@ -184,7 +210,7 @@ export function usePersonalList(userId: number) {
         const data = new FormData()
         data.append("data", file)
 
-        const response = await request("/self/pl-import", {
+        const response = await request(`/lists/${listId}/import`, {
             method: "POST",
             body: data
         })
@@ -198,7 +224,7 @@ export function usePersonalList(userId: number) {
     }
 
     async function exportLocations() {
-        const response = await rawFetch("/self/pl-export")
+        const response = await rawFetch(`/lists/${listId}/export`)
         if (response.status !== 200) {
             toast.error(`Failed to export personal list`)
             return
@@ -208,14 +234,16 @@ export function usePersonalList(userId: number) {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `pl-export.json`
+        a.download = `sl-${listId}-export.json`
         a.click()
         URL.revokeObjectURL(url)
     }
 
     return {
+        details,
         locations,
         loading,
+
         search,
         fetchOne,
         create,
