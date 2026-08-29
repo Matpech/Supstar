@@ -17,6 +17,8 @@ import PersonalListViewer from './pages/PersonalListViewer'
 import 'react-leaflet-cluster/dist/assets/MarkerCluster.css'
 import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css'
 import SharedListViewer from './pages/SharedListViewer'
+import SharedListSettings from './pages/SharedListSettings'
+import { ListProvider } from './contexts/ListContext'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -41,6 +43,7 @@ createRoot(document.getElementById('root')!).render(
 
                             <Route path='/user/:user_id/list' element={<PersonalListViewer />} />
                             <Route path='/list/:list_id' element={<SharedListViewer />} />
+                            <Route path='/list/:list_id/settings' element={<ListProvider listType='shared'><SharedListSettings /></ListProvider>} />
                         </Route>
                     </Route>
                 </Routes>

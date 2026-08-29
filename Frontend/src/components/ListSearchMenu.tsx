@@ -10,8 +10,11 @@ import SearchFiltersMenu from "./SearchFiltersMenu"
 import LocationEditor from "./LocationEditor"
 import toast from "react-hot-toast"
 import LocationImportModal from "./LocationImportModal"
+import { Settings } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 function ListSearchMenu() {
+    const navigate = useNavigate()
     const listCtx = useContext(ListContext)
     if (!listCtx) {
         throw new Error("ListSearchMenu must be used inside ListProvider")
@@ -206,6 +209,14 @@ function ListSearchMenu() {
                     action={() => setImportModalOpen(true)}
                 >
                     Import
+                </GenericButton>
+
+                <GenericButton
+                    classNameOverride={listCtx.permissions.MANAGE_LIST ? undefined : "hidden"}
+                    type="neutral"
+                    action={() => navigate("./settings")}
+                >
+                    <Settings />
                 </GenericButton>
             </div>
 

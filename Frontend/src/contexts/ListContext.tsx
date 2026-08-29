@@ -15,6 +15,7 @@ interface ListContextType {
     focusAt: LatLngExpression | null
     listType: 'personal' | 'shared'
     permissions: ListPermissions
+    loadingPermissions: boolean
 
     // Callable functions
     search: (
@@ -56,6 +57,7 @@ export function ListProvider({ children, listType }: Props) {
         MANAGE_LOCATIONS: false,
         PUBLISH_REVIEWS: false
     })
+    const [loadingPermissions, setLoadingPermissions] = useState(true)
 
     let userId: number
     let listId: number
@@ -88,8 +90,6 @@ export function ListProvider({ children, listType }: Props) {
 
     // Define permissions
     useEffect(() => {
-        console.log("Defining permissions...")
-
         let permissions: ListPermissions = {
             MANAGE_LIST: false,
             MANAGE_MEMBERS: false,
@@ -100,11 +100,13 @@ export function ListProvider({ children, listType }: Props) {
         if (listType === 'personal') {
             permissions.MANAGE_LOCATIONS = (userId === ctx.user?.id)
             permissions.PUBLISH_REVIEWS = true
-        } else if (listType === 'shared' && sl) {
-            permissions.MANAGE_LIST = (sl.details?.role === SLRoles.OWNER)
-            permissions.MANAGE_MEMBERS = (sl.details?.role === SLRoles.OWNER)
-            permissions.MANAGE_LOCATIONS = (sl.details?.role === SLRoles.OWNER || sl.details?.role === SLRoles.EDITOR)
-            permissions.PUBLISH_REVIEWS = (sl.details?.role !== SLRoles.READER)
+            setLoadingPermissions(false)
+        } else if (listType === 'shared' && sl && sl.details) {
+            permissions.MANAGE_LIST = (sl.details.role === SLRoles.OWNER)
+            permissions.MANAGE_MEMBERS = (sl.details.role === SLRoles.OWNER)
+            permissions.MANAGE_LOCATIONS = (sl.details.role === SLRoles.OWNER || sl.details?.role === SLRoles.EDITOR)
+            permissions.PUBLISH_REVIEWS = (sl.details.role !== SLRoles.READER)
+            setLoadingPermissions(false)
         }
 
         setPermissions(permissions)
@@ -270,6 +272,7 @@ export function ListProvider({ children, listType }: Props) {
                 focusAt,
                 listType,
                 permissions,
+                loadingPermissions,
 
                 search,
                 getOneLocation,
