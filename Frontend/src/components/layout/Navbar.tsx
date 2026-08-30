@@ -1,10 +1,16 @@
-import { MapPin } from "lucide-react"
+import { BookmarkPlusIcon, MapPin } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
 import { Link, useNavigate } from "react-router-dom"
+import { useState } from "react"
+import { createPortal } from "react-dom"
+import ModalCard from "../ui/ModalCard"
+import NewListModal from "../modals/NewListModal"
+import GenericButton from "../ui/GenericButton"
 
 function Navbar() {
     const auth = useAuth()
     const navigate = useNavigate()
+    const [slModalOpen, setSlModalOpen] = useState(false)
 
     return (
         <div
@@ -25,6 +31,16 @@ function Navbar() {
             </div>
 
             <nav className="flex items-center gap-8">
+                <GenericButton
+                    type="primary"
+                    action={() => setSlModalOpen(true)}
+                >
+                    <div className="flex items-center gap-1">
+                        <BookmarkPlusIcon />
+                        Create list
+                    </div>
+                </GenericButton>
+
                 <Link to="/settings" className="md:text-2xl">
                     Settings
                 </Link>
@@ -36,6 +52,13 @@ function Navbar() {
                     Log out
                 </button>
             </nav>
+
+            {slModalOpen && createPortal(
+                <ModalCard title="Create shared list" onClose={() => setSlModalOpen(false)}>
+                    <NewListModal close={() => setSlModalOpen(false)} />
+                </ModalCard>,
+                document.body
+            )}
         </div>
     )
 }

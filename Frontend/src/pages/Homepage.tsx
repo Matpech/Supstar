@@ -7,21 +7,23 @@ import toast from "react-hot-toast"
 import SkeletonStatCards from "../components/skeletons/SkeletonStatCards"
 import SharedListBrowser from "../components/SharedListBrowser"
 import { useSharedLists } from "../hooks/useSharedLists"
-import { useNavigate } from "react-router-dom"
 import SkeletonSLBrowser from "../components/skeletons/SkeletonSLBrowser"
 import GenericButton from "../components/ui/GenericButton"
 import type { UserStats } from "../types/user"
 import type { SharedList } from "../types/lists"
+import { createPortal } from "react-dom"
+import ModalCard from "../components/ui/ModalCard"
+import NewListModal from "../components/modals/NewListModal"
 
 function Homepage() {
     const auth = useAuth()
-    const navigate = useNavigate()
     const { request } = useApiClient()
     const { getAvailableSharedLists } = useSharedLists()
 
     const [stats, setStats] = useState<UserStats | null>(null)
     const [sharedLists, setSharedLists] = useState<SharedList[]>([])
     const [loading, setLoading] = useState(true)
+    const [slModalOpen, setSlModalOpen] = useState(false)
 
     useEffect(() => {
         async function fetchData() {
@@ -73,7 +75,7 @@ function Homepage() {
                     <h2 className="text-2xl md:text-4xl">List browser</h2>
                     <GenericButton
                         type="primary"
-                        action={() => navigate("/new-list")}
+                        action={() => setSlModalOpen(true)}
                     >
                         New
                     </GenericButton>
@@ -81,6 +83,13 @@ function Homepage() {
 
                 {loading && (<SkeletonSLBrowser />)}
                 {!loading && (<SharedListBrowser sharedLists={sharedLists} />)}
+
+                {slModalOpen && createPortal(
+                    <ModalCard title="Create shared list" onClose={() => setSlModalOpen(false)}>
+                        <NewListModal close={() => setSlModalOpen(false)} />
+                    </ModalCard>,
+                    document.body
+                )}
             </section>
         </div>
     )
