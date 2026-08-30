@@ -8,10 +8,10 @@ import GenericCard from "./ui/GenericCard"
 import { createPortal } from "react-dom"
 import ImageViewer from "./ImageViewer"
 import ModalCard from "./ui/ModalCard"
-import ReviewEditor from "./ReviewEditor"
+import ReviewEditor from "./modals/ReviewEditor"
 import { useAuth } from "../hooks/useAuth"
 import ConfirmationPrompt from "./ui/ConfirmationPrompt"
-import PhotoUploadModal from "./PhotoUploadModal"
+import PhotoUploadModal from "./modals/PhotoUploadModal"
 import toast from "react-hot-toast"
 
 function LocationDetails() {

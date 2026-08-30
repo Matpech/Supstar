@@ -1,6 +1,6 @@
 import { Star } from "lucide-react"
 import { useState } from "react"
-import GenericButton from "./ui/GenericButton"
+import GenericButton from "../ui/GenericButton"
 import toast from "react-hot-toast"
 
 interface Props {

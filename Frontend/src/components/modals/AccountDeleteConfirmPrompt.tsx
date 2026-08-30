@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { useAuth } from "../hooks/useAuth"
-import { useApiClient } from "../hooks/useApiClient"
+import { useAuth } from "../../hooks/useAuth"
+import { useApiClient } from "../../hooks/useApiClient"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
-import GenericButton from "./ui/GenericButton"
+import GenericButton from "../ui/GenericButton"
 
 interface Props {
     closeModal: Function

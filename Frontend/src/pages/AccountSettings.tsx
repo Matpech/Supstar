@@ -1,7 +1,7 @@
 import { useState } from "react"
 import GenericCard from "../components/ui/GenericCard"
 import { createPortal } from "react-dom"
-import AccountDeleteConfirmPrompt from "../components/AccountDeleteConfirmPrompt"
+import AccountDeleteConfirmPrompt from "../components/modals/AccountDeleteConfirmPrompt"
 import ModalCard from "../components/ui/ModalCard"
 import { useApiClient } from "../hooks/useApiClient"
 import toast from "react-hot-toast"

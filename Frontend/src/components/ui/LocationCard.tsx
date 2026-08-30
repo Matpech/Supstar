@@ -4,7 +4,7 @@ import { useState } from "react"
 import { createPortal } from "react-dom"
 import ModalCard from "./ModalCard"
 import ConfirmationPrompt from "./ConfirmationPrompt"
-import LocationEditor from "../LocationEditor"
+import LocationEditor from "../modals/LocationEditor"
 
 interface Props {
     data: Location

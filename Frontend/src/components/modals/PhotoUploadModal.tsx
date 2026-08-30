@@ -1,5 +1,5 @@
 import { useState } from "react"
-import GenericButton from "./ui/GenericButton"
+import GenericButton from "../ui/GenericButton"
 
 interface Props {
     onCancel: Function

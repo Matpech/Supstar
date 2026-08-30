@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { LocationCategory, LocationStatus, SearchFilters } from "../types/location";
-import { countryCodes } from "../utils/iso3166";
-import GenericButton from "./ui/GenericButton";
+import type { LocationCategory, LocationStatus, SearchFilters } from "../../types/location";
+import { countryCodes } from "../../utils/iso3166";
+import GenericButton from "../ui/GenericButton";
 
 interface FilterModalProps {
     open: boolean

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
-import GenericButton from "./ui/GenericButton"
-import type { Location, LocationCategory, LocationStatus } from "../types/location";
-import { type CountryCode, countryCodes } from "../utils/iso3166";
-import MapSelector from "./MapSelector";
+import GenericButton from "../ui/GenericButton"
+import type { Location, LocationCategory, LocationStatus } from "../../types/location";
+import { type CountryCode, countryCodes } from "../../utils/iso3166";
+import MapSelector from "../MapSelector";
 import type { LatLngTuple } from "leaflet";
 import toast from "react-hot-toast";
 
