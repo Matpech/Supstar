@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useMemo, useState } from "react"
 import GenericButton from "./ui/GenericButton"
 import { ListContext } from "../contexts/ListContext"
 import { Banknote, Clock, ImageOff, Map, Pencil, Pin, PinOff, Star, StarCheck, StarX, Tag, Trash2 } from "lucide-react"
@@ -40,6 +40,16 @@ function LocationDetails() {
 
         fetchLocation()
     }, [listCtx.selectedLocation])
+
+    const reviewAlreadyPublished = useMemo(() => {
+        if (!details || !details.reviews) return false
+        return details.reviews.some((review) => review.reviewer.id === ctx.user?.id)
+    }, [details?.reviews])
+
+    const photoLimitReached = useMemo(() => {
+        if (!details || !details.images) return false
+        return details.images.length >= 10
+    }, [details?.images])
 
     if (!details) return
 
@@ -309,6 +319,7 @@ function LocationDetails() {
 
                         <GenericButton
                             type="primary"
+                            disabled={reviewAlreadyPublished}
                             action={() => setReviewCreateModalOpen(true)}
                             classNameOverride={listCtx.permissions.PUBLISH_REVIEWS ? "w-full" : "hidden"}
                         >
@@ -385,6 +396,7 @@ function LocationDetails() {
 
                     <GenericButton
                         type="primary"
+                        disabled={photoLimitReached}
                         action={() => setPhotoUploadModalOpen(true)}
                         classNameOverride={listCtx.permissions.MANAGE_LOCATIONS ? "w-full" : "hidden"}
                     >
