@@ -67,7 +67,9 @@ export function useApiClient() {
             headers
         })
 
-        let json = response.status !== 204
+        let contentType = response.headers.get("Content-Type")
+
+        let json = contentType?.split(";")[0].trim() === "application/json"
             ? await response.json()
             : undefined
 
@@ -81,7 +83,10 @@ export function useApiClient() {
                         ...options,
                         headers
                     })
-                    json = await response.json()
+                    contentType = response.headers.get("Content-Type")
+                    if (contentType?.split(";")[0].trim() === "application/json") {
+                        json = await response.json()
+                    }
                 } else {
                     return {
                         code: 401,

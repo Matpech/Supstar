@@ -26,11 +26,12 @@ interface ListContextType {
     getOneLocation: (locationId: number) => Promise<Location | null>
     setSubmenu: (submenu: 'search' | 'details') => void
     openLocation: (location: Location) => void
+    reloadLocation: () => Promise<Location>
     resetFocusPoint: () => void
     createLocation: (data: Location) => Promise<Location>
     updateLocation: (data: Location) => Promise<Location>
     deleteLocation: (data: Location) => Promise<boolean>
-    uploadPhotos: (locationId: number, photos: File[]) => void
+    uploadPhotos: (locationId: number, photos: File[]) => Promise<void>
     deletePhoto: (locationId: number, imageId: string) => Promise<boolean>
     publishReview: (locationId: number, data: ReviewBody) => Promise<Review>
     updateReview: (locationId: number, reviewId: number, data: ReviewBody) => void
@@ -151,6 +152,24 @@ export function ListProvider({ children, listType }: Props) {
         }
     }, [])
 
+    const reloadLocation = useCallback(async () => {
+        if (!selectedLocation) return
+
+        if (listType === 'personal' && pl) {
+            const data = await pl.fetchOne(selectedLocation.id)
+            if (!data) setSubmenu('search')
+            setSelectedLocation(data)
+            return data
+        } else if (listType === 'shared' && sl) {
+            const data = await sl.fetchLocation(selectedLocation.id)
+            if (!data) setSubmenu('search')
+            setSelectedLocation(data)
+            return data
+        } else {
+            throw new Error("Cannot perform any of the specialized list actions")
+        }
+    }, [selectedLocation])
+
     const createLocation = useCallback(async (data: Location) => {
         if (listType === 'personal' && pl) {
             const newLocation = await pl.create(data)
@@ -187,11 +206,11 @@ export function ListProvider({ children, listType }: Props) {
         }
     }, [])
 
-    const uploadPhotos = useCallback((locationId: number, photos: File[]) => {
+    const uploadPhotos = useCallback(async (locationId: number, photos: File[]) => {
         if (listType === 'personal' && pl) {
-            pl.uploadPhotosToGallery(locationId, photos)
+            await pl.uploadPhotosToGallery(locationId, photos)
         } else if (listType === 'shared' && sl) {
-            sl.uploadPhotosToGallery(locationId, photos)
+            await sl.uploadPhotosToGallery(locationId, photos)
         } else {
             throw new Error("Cannot perform any of the specialized list actions")
         }
@@ -278,6 +297,7 @@ export function ListProvider({ children, listType }: Props) {
                 getOneLocation,
                 setSubmenu,
                 openLocation,
+                reloadLocation,
                 resetFocusPoint,
                 createLocation,
                 updateLocation,

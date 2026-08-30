@@ -112,11 +112,12 @@ function LocationDetails() {
         }
     }
 
-    function handlePhotoUpload(files: File[]) {
+    async function handlePhotoUpload(files: File[]) {
         if (!listCtx || !listCtx.selectedLocation) return
         toast("Uploading photos...")
-        listCtx.uploadPhotos(listCtx.selectedLocation.id, files)
         setPhotoUploadModalOpen(false)
+        await listCtx.uploadPhotos(listCtx.selectedLocation.id, files)
+        listCtx.reloadLocation()
     }
 
     async function handlePhotoDelete(imageId: string) {
