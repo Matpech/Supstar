@@ -63,7 +63,7 @@ function DiscordCallback() {
     }, [])
 
     return (
-        <main className="min-h-screen bg-gradient-to-tr from-green-400/80 via-green-50 to-white flex items-center justify-center px-4">
+        <main className="min-h-screen bg-linear-to-tr from-green-400/80 via-green-50 to-white flex items-center justify-center px-4">
             <section className="w-full max-w-md">
                 <div className="rounded-2xl bg-white/90 p-8 shadow-xl ring-1 ring-black/5 backdrop-blur-sm">
                     <h1 className="mb-8 text-3xl text-center font-bold tracking-tight text-gray-900">
