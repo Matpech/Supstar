@@ -209,52 +209,52 @@ function LocationDetails() {
                     {details.price !== undefined && (
                     <div className="flex gap-2 items-center">
                         <Banknote size={48} color="var(--color-green-600)" />
-                        <p>Price: {details.price}€</p>
+                        <p><span className="text-green-600 font-semibold">Price: </span>{details.price}€</p>
                     </div>)}
 
                     <div className="flex gap-2 items-center">
                         {details.status === 'to_be_visited' && (<PinOff size={48} color="var(--color-green-600)" />)}
                         {details.status === 'visited' && (<Pin size={48} color="var(--color-green-600)" />)}
                         {details.status === 'favorite' && (<Star size={48} color="var(--color-green-600)" />)}
-                        <p>Status: {details.status}</p>
+                        <p><span className="text-green-600 font-semibold">Status: </span>{details.status}</p>
                     </div>
 
                     {details.tags && details.tags.length > 0 && (
-                    <div>
+                    <div className="flex gap-2 items-center">
                         <Tag size={48} color="var(--color-green-600)" />
-                        <p>Tags: {details.tags.join(", ")}</p>
+                        <p><span className="text-green-600 font-semibold">Tags: </span>{details.tags.join(", ")}</p>
                     </div>
                     )}
 
                     {details.opening_times && (
-                    <div>
+                    <div className="flex gap-2">
                         <Clock size={48} color="var(--color-green-600)" />
                         <div>
-                            <p>Monday: {details.opening_times.monday
+                            <p><span className="text-green-600 font-semibold">Monday: </span>{details.opening_times.monday
                                 ? `${details.opening_times.monday.open} - ${details.opening_times.monday.close}`
                                 : "No data"}
                             </p>
-                            <p>Tuesday: {details.opening_times.tuesday
+                            <p><span className="text-green-600 font-semibold">Tuesday: </span>{details.opening_times.tuesday
                                 ? `${details.opening_times.tuesday.open} - ${details.opening_times.tuesday.close}`
                                 : "No data"}
                             </p>
-                            <p>Wednesday: {details.opening_times.wednesday
+                            <p><span className="text-green-600 font-semibold">Wednesday: </span>{details.opening_times.wednesday
                                 ? `${details.opening_times.wednesday.open} - ${details.opening_times.wednesday.close}`
                                 : "No data"}
                             </p>
-                            <p>Thursday: {details.opening_times.thursday
+                            <p><span className="text-green-600 font-semibold">Thursday: </span>{details.opening_times.thursday
                                 ? `${details.opening_times.thursday.open} - ${details.opening_times.thursday.close}`
                                 : "No data"}
                             </p>
-                            <p>Friday: {details.opening_times.friday
+                            <p><span className="text-green-600 font-semibold">Friday: </span>{details.opening_times.friday
                                 ? `${details.opening_times.friday.open} - ${details.opening_times.friday.close}`
                                 : "No data"}
                             </p>
-                            <p>Saturday: {details.opening_times.saturday
+                            <p><span className="text-green-600 font-semibold">Saturday: </span>{details.opening_times.saturday
                                 ? `${details.opening_times.saturday.open} - ${details.opening_times.saturday.close}`
                                 : "No data"}
                             </p>
-                            <p>Sunday: {details.opening_times.sunday
+                            <p><span className="text-green-600 font-semibold">Sunday: </span>{details.opening_times.sunday
                                 ? `${details.opening_times.sunday.open} - ${details.opening_times.sunday.close}`
                                 : "No data"}
                             </p>
