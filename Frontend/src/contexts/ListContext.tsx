@@ -34,7 +34,7 @@ interface ListContextType {
     uploadPhotos: (locationId: number, photos: File[]) => Promise<void>
     deletePhoto: (locationId: number, imageId: string) => Promise<boolean>
     publishReview: (locationId: number, data: ReviewBody) => Promise<Review>
-    updateReview: (locationId: number, reviewId: number, data: ReviewBody) => void
+    updateReview: (locationId: number, reviewId: number, data: ReviewBody) => Promise<void>
     deleteReview: (locationId: number, reviewId: number) => Promise<boolean>
     importLocations: (file: File) => Promise<void>
     exportLocations: () => void
@@ -240,11 +240,11 @@ export function ListProvider({ children, listType }: Props) {
         }
     }, [])
 
-    const updateReview = useCallback((locationId: number, reviewId: number, data: ReviewBody) => {
+    const updateReview = useCallback(async (locationId: number, reviewId: number, data: ReviewBody) => {
         if (listType === 'personal' && pl) {
-            pl.updateReview(locationId, reviewId, data)
+            await pl.updateReview(locationId, reviewId, data)
         } else if (listType === 'shared' && sl) {
-            sl.updateReview(locationId, reviewId, data)
+            await sl.updateReview(locationId, reviewId, data)
         } else {
             throw new Error("Cannot perform any of the specialized list actions")
         }

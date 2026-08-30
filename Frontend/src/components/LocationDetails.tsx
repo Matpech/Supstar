@@ -65,18 +65,7 @@ function LocationDetails() {
 
         const review = await listCtx.publishReview(listCtx.selectedLocation.id, payload)
         if (review) {
-            setDetails((prev) => {
-                if (!prev) return null
-    
-                const newArray = prev?.reviews
-                    ? [...prev.reviews, review]
-                    : [review]
-    
-                return {
-                    ...prev,
-                    reviews: newArray
-                }
-            })
+            listCtx.reloadLocation()
         }
     }
 
@@ -89,7 +78,8 @@ function LocationDetails() {
             payload.comment = comment
         }
 
-        listCtx.updateReview(listCtx.selectedLocation.id, id, payload)
+        await listCtx.updateReview(listCtx.selectedLocation.id, id, payload)
+        listCtx.reloadLocation()
     }
 
     async function handleReviewDelete(id: number) {
@@ -97,18 +87,7 @@ function LocationDetails() {
 
         const deleted = await listCtx.deleteReview(listCtx.selectedLocation.id, id)
         if (deleted) {
-            setDetails((prev) => {
-                if (!prev) return null
-    
-                const newArray = prev?.reviews
-                    ? [...prev.reviews].filter((r) => r.id !== id)
-                    : []
-    
-                return {
-                    ...prev,
-                    reviews: newArray
-                }
-            })
+            listCtx.reloadLocation()
         }
     }
 
