@@ -10,7 +10,7 @@ import SearchFiltersMenu from "./modals/SearchFiltersMenu"
 import LocationEditor from "./modals/LocationEditor"
 import toast from "react-hot-toast"
 import LocationImportModal from "./modals/LocationImportModal"
-import { Settings } from "lucide-react"
+import { Settings, SlidersHorizontal } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 function ListSearchMenu() {
@@ -167,7 +167,7 @@ function ListSearchMenu() {
                         action={() => setFiltersModalOpen(true)}
                         classNameOverride="border"
                     >
-                        Filters
+                        <SlidersHorizontal />
                     </GenericButton>
                 </div>
             </section>

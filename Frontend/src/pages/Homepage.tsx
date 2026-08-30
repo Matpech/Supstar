@@ -14,6 +14,7 @@ import type { SharedList } from "../types/lists"
 import { createPortal } from "react-dom"
 import ModalCard from "../components/ui/ModalCard"
 import NewListModal from "../components/modals/NewListModal"
+import { PlusSquare } from "lucide-react"
 
 function Homepage() {
     const auth = useAuth()
@@ -77,7 +78,10 @@ function Homepage() {
                         type="primary"
                         action={() => setSlModalOpen(true)}
                     >
-                        New
+                        <div className="flex items-center gap-1">
+                            <PlusSquare />
+                            New
+                        </div>
                     </GenericButton>
                 </div>
 

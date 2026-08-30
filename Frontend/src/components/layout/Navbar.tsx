@@ -1,4 +1,4 @@
-import { BookmarkPlusIcon, MapPin } from "lucide-react"
+import { BookmarkPlusIcon, LogOut, MapPin, Settings } from "lucide-react"
 import { useAuth } from "../../hooks/useAuth"
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
@@ -37,19 +37,21 @@ function Navbar() {
                 >
                     <div className="flex items-center gap-1">
                         <BookmarkPlusIcon />
-                        Create list
+                        <span className="hidden md:block">Create list</span>
                     </div>
                 </GenericButton>
 
                 <Link to="/settings" className="md:text-2xl">
-                    Settings
+                    <Settings className="md:hidden" />
+                    <span className="hidden md:block">Settings</span>
                 </Link>
 
                 <button
                     onClick={auth.logout}
                     className="md:text-2xl cursor-pointer"
                 >
-                    Log out
+                    <LogOut className="md:hidden" />
+                    <span className="hidden md:block">Log out</span>
                 </button>
             </nav>
 

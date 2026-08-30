@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from "react"
 import GenericButton from "./ui/GenericButton"
 import { ListContext } from "../contexts/ListContext"
-import { Banknote, Clock, ImageOff, Map, Pencil, Pin, PinOff, Star, StarCheck, StarX, Tag, Trash2 } from "lucide-react"
+import { Banknote, ChevronLeft, Clock, ImageOff, Map, Pencil, Pin, PinOff, Star, StarCheck, StarX, Tag, Trash2 } from "lucide-react"
 import type { Location, ReviewBody } from "../types/location"
 import { countryCodes, type CountryCode } from "../utils/iso3166"
 import GenericCard from "./ui/GenericCard"
@@ -146,7 +146,9 @@ function LocationDetails() {
                     type="primary"
                     action={() => listCtx.setSubmenu('search')}
                 >
-                    Back
+                    <div className="flex items-center gap-1">
+                        <ChevronLeft />
+                    </div>
                 </GenericButton>
 
                 <div>

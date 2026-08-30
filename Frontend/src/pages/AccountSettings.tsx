@@ -7,6 +7,7 @@ import { useApiClient } from "../hooks/useApiClient"
 import toast from "react-hot-toast"
 import { useAuth } from "../hooks/useAuth"
 import GenericButton from "../components/ui/GenericButton"
+import { TriangleAlert } from "lucide-react"
 
 function AccountSettings() {
     const { request } = useApiClient()
@@ -131,7 +132,10 @@ function AccountSettings() {
                         action={() => setDeleteModalOpen(true)}
                         classNameOverride="mt-4"
                     >
-                        Delete account
+                        <div className="flex items-center gap-1">
+                            <TriangleAlert />
+                            Delete account
+                        </div>
                     </GenericButton>
 
                 </GenericCard>
